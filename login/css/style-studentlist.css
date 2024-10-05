@@ -1,0 +1,544 @@
+/* Base styles for the body and HTML */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Open Sans', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Header styles, incorporating flexbox for layout */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px; /* Adjust padding as needed */
+    background-color: #db4b23;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Container for navigation and auth buttons */
+.nav-auth {
+    display: flex;
+    align-items: center;
+}
+
+/* Push auth buttons to the right */
+.auth-buttons {
+    margin-left: auto; /* This will push the auth buttons to the right */
+    display: flex;
+}
+
+.auth-buttons a {
+    padding: 8px 16px; /* Adjust padding for better spacing */
+    margin-left: 10px; /* Space between buttons */
+    background-color: #e65c00;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.auth-buttons a:hover {
+    background-color: #cc5200;
+}
+
+/* Sidebar styles */
+.sidebar {
+    width: 70px; /* Collapsed width */
+    height: 100vh;
+    background-color: #db4b23;
+    color: white;
+    position: fixed;
+    left: 0;
+    top: 0;
+    transition: width 0.5s; /* Smooth transition for expanding/collapsing */
+    overflow-x: hidden; /* Hide overflow text */
+    z-index: 1000; /* Ensure it stays on top */
+    display: flex; /* Use Flexbox to align content */
+    flex-direction: column; /* Align children vertically */
+    align-items: center; /* Center items horizontally */
+    justify-content: center; /* Center items vertically */
+}
+
+/* Expanded sidebar styles */
+.sidebar.active {
+    width: 250px; /* Expanded width */
+}
+
+/* Sidebar navigation list */
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%; /* Full width for the list */
+}
+
+/* Sidebar navigation items */
+.sidebar ul li {
+    width: 100%; /* Ensure each list item takes full width */
+    padding: 15px;
+    text-align: left;
+    transition: background-color 0.3s;
+    display: flex; /* Use flexbox for aligning items */
+    align-items: center; /* Center the icon and text vertically */
+    justify-content: flex-start; /* Align items to the left when expanded */
+}
+
+.sidebar ul li:hover {
+    background-color: #e65c00;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: white;
+    display: flex;
+    align-items: center;
+}
+
+/* Icon styles in sidebar */
+.sidebar ul li a i {
+    margin-right: 20px;
+    font-size: 18px;
+}
+
+/* Text styles in sidebar */
+.sidebar ul li a .nav-item {
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.5s; /* Smooth transition for text */
+}
+
+/* Show text when sidebar is expanded */
+.sidebar.active ul li a .nav-item {
+    opacity: 1;
+}
+
+/* Adjust main container based on sidebar state */
+.main-container {
+    margin-left: 70px; /* Margin when sidebar is collapsed */
+    transition: margin-left 0.5s;
+    padding: 20px;
+    text-align: center;
+}
+
+.sidebar.active ~ .main-container {
+    margin-left: 250px; /* Adjust margin when sidebar is expanded */
+}
+
+/* Top bar styles */
+.top {
+    position: absolute;
+    top: 15px;
+    left: 10px;
+    cursor: pointer;
+    color: white;
+}
+
+/* Main container styles for content area */
+/* Main container styles for content area */
+.main-container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 30px auto;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    border-radius: 8px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.main-container:hover {
+    transform: translateY(-5px);
+}
+
+/* DataTables Integration */
+.datatable {
+    width: 100%; /* Full width of container */
+    margin: 20px 0;
+    font-size: 1em;
+    font-family: 'Open Sans', sans-serif;
+    min-width: 400px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden; /* To maintain border-radius */
+    border: 1px solid #ddd;
+}
+
+.datatable th, .datatable td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.datatable th {
+    background-color: #f96c20; /* Header background */
+    color: white;
+    font-weight: bold;
+    border-bottom: 2px solid #f96c20;
+}
+
+.datatable tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+.datatable tbody tr:nth-child(even) {
+    background-color: #ffffff;
+}
+
+.datatable tbody tr:hover {
+    background-color: #f1f1f1;
+    cursor: pointer;
+}
+
+/* Pagination Controls Styling */
+.datatable-pagination {
+    width: 100%; /* Full width */
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.datatable-pagination .paginate_button {
+    padding: 8px 12px;
+    margin: 0 4px;
+    border: 1px solid #db4b23;
+    border-radius: 4px;
+    background-color: #db4b23;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.datatable-pagination .paginate_button:hover {
+    background-color: #f96c20;
+    border-color: #f96c20;
+}
+
+.datatable-pagination .paginate_button.current {
+    background-color: #f96c20;
+    color: white;
+    border-color: #f96c20;
+}
+
+/* Dropdown Menu Styling */
+.dropdown-menu {
+    background-color: #db4b23;
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+    color: white;
+    padding: 10px 20px;
+    transition: background-color 0.3s;
+}
+
+.dropdown-item:hover {
+    background-color: #f96c20;
+    color: white;
+}
+
+/* Custom Styles for "Đóng" Button */
+.btn-dong {
+    background-color: #db4b23 !important;
+    border-color: #db4b23 !important;
+    color: white !important;
+    padding: 8px 16px;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-dong:hover {
+    background-color: #f96c20 !important;
+    border-color: #f96c20 !important;
+    color: white !important;
+}
+
+.btn-dong:focus {
+    box-shadow: 0 0 0 0.2rem rgba(219, 75, 35, 0.5);
+}
+
+/* Search Bar Styling */
+.datatable-search input {
+    width: 300px;
+    padding: 8px 12px;
+    border: 1px solid #db4b23;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.datatable-search input:focus {
+    border-color: #f96c20;
+    outline: none;
+    box-shadow: 0 0 5px rgba(249, 108, 32, 0.5);
+}
+
+/* Responsive Table */
+@media screen and (max-width: 768px) {
+    .datatable {
+        font-size: 0.9em;
+    }
+
+    .datatable-search input {
+        width: 100%;
+    }
+
+    .datatable-pagination .paginate_button {
+        padding: 6px 8px;
+        margin: 0 2px;
+        font-size: 14px;
+    }
+}
+/* Modal Header Styling */
+.modal-header {
+    background-color: #db4b23; /* Header background */
+    color: white; /* Text color */
+    border-bottom: 1px solid #db4b23;
+}
+
+/* Modal Title Styling */
+.modal-title {
+    font-size: 18px; /* Adjust the font size */
+    font-weight: bold; /* Bold text */
+    color: white; /* Ensure text is white */
+}
+/* Dropdown Menu Styling */
+.dropdown-menu {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    min-width: 160px;
+    padding: 10px 0;
+    margin: 2px 0 0;
+    font-size: 14px;
+    text-align: left;
+    list-style: none;
+    background-color: #db4b23; /* Background color */
+    color: #ffffff; /* Text color */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+}
+
+/* Show the dropdown menu */
+.dropdown-menu.show {
+    display: block;
+}
+
+/* Dropdown button styles */
+.dropdown-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    padding: 8px 20px;
+    margin: 4px 0;
+    background-color: #db4b23;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Dropdown button hover effect */
+.dropdown-menu a:hover {
+    background-color: #f96c20;
+}
+
+/* Icon styling within dropdown items */
+.dropdown-menu a i {
+    margin-right: 10px;
+}
+/* ===============================
+   Base Table Styling
+   =============================== */
+
+/* Ensure the table uses Bootstrap's table classes */
+#studentListTable {
+    width: 100%;
+    margin-top: 20px;
+}
+
+#studentListTable th, #studentListTable td {
+    text-align: center; /* Center align text */
+    vertical-align: middle; /* Center vertically */
+}
+
+#studentListTable th {
+    background-color: #db4b23; /* Header background color */
+    color: #ffffff; /* Header text color */
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#studentListTable tbody tr:nth-child(even) {
+    background-color: #f2f2f2; /* Zebra striping */
+}
+
+#studentListTable tbody tr:hover {
+    background-color: #e9ecef; /* Hover effect */
+    cursor: pointer;
+}
+
+#studentListTable tbody tr.selected {
+    background-color: #ffe6e0; /* Selected row color */
+}
+
+#studentListTable td {
+    padding: 12px 15px;
+    font-size: 14px;
+    color: #333333;
+}
+
+/* No Students Row Styling */
+.no-students {
+    text-align: center;
+    padding: 20px;
+    color: #777777;
+}
+
+/* ===============================
+   DataTables Component Styling
+   =============================== */
+
+/* Search Box Styling */
+.datatable-search {
+    margin-bottom: 15px;
+}
+
+.datatable-search label {
+    font-weight: bold;
+    color: #333333;
+}
+
+.datatable-search input {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Pagination Styling */
+.datatable-pagination .paginate_button {
+    padding: 6px 12px;
+    margin-left: 2px;
+    border: 1px solid #db4b23;
+    border-radius: 4px;
+    background-color: #db4b23;
+    color: #ffffff !important;
+}
+
+.datatable-pagination .paginate_button:hover {
+    background-color: #e65c00;
+    border-color: #e65c00;
+    color: #ffffff !important;
+}
+
+
+
+/* DataTables Info Styling */
+.dataTables_info {
+    color: #333333;
+    font-size: 14px;
+}
+
+/* Sorting Indicators */
+#studentListTable thead th.sorting::after,
+#studentListTable thead th.sorting_asc::after,
+#studentListTable thead th.sorting_desc::after {
+    font-family: 'Font Awesome 5 Free'; /* Ensure Font Awesome is loaded */
+    font-weight: 900;
+    margin-left: 5px;
+    content: '\f0dc'; /* Font Awesome sort icon */
+}
+
+#studentListTable thead th.sorting_asc::after {
+    content: '\f0de'; /* Font Awesome sort-up icon */
+}
+
+#studentListTable thead th.sorting_desc::after {
+    content: '\f0dd'; /* Font Awesome sort-down icon */
+}
+
+/* ===============================
+   Responsive Table Styling
+   =============================== */
+
+@media (max-width: 768px) {
+    #studentListTable thead {
+        display: none;
+    }
+
+    #studentListTable, #studentListTable tbody, #studentListTable tr, #studentListTable td {
+        display: block;
+        width: 100%;
+    }
+
+    #studentListTable tr {
+        margin-bottom: 15px;
+    }
+
+    #studentListTable td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+    }
+
+    #studentListTable td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 15px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: bold;
+    }
+}
+
+/* ===============================
+   Modal Styling Enhancements
+   =============================== */
+
+.modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    background-color: #db4b23;
+    color: #ffffff;
+    border-bottom: none;
+}
+
+.modal-title {
+    font-size: 20px;
+}
+
+.modal-body {
+    padding: 20px;
+    font-size: 16px;
+    color: #333333;
+}
+
+.modal-footer {
+    padding: 10px 20px;
+    border-top: none;
+}
+
+.btn-dong {
+    background-color: #db4b23;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-dong:hover {
+    background-color: #e65c00;
+}

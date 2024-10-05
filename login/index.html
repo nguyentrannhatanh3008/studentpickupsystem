@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Pick-Up System</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <h1>  </h1>
+        <div class="auth-buttons">
+            <a href="login.html" class="btn" id="loginBtn">Đăng Nhập</a>
+            <a href="register.html" class="btn" id="registerBtn">Đăng Ký</a>
+        </div>
+    </header>
+    <div class="sidebar" id="sidebar">
+        <div class="top">
+            <i class="fas fa-bars" id ="btn"></i>
+        </div>
+        <ul class="nav-list">
+            <li><a href="index.html"><i class="fas fa-home"></i> <span class="nav-item">Trang Chủ</span></a></li>
+            <li><a href="notification.html"><i class="fas fa-bell"></i> <span class="nav-item">Thông Báo</span></a></li>
+            <li><a href="profile.html"><i class="fas fa-user"></i> <span class="nav-item">Hồ Sơ</span></a></li>
+            <li><a href="studentlist.html"><i class="fas fa-child"></i> <span class="nav-item">Danh Sách Con</span></a></li>
+        </ul>
+    </div>
+    <div class="main-container">
+        <div class="form-container">
+            <form id="pickupForm">
+                <div class="input-group">
+                    <label for="studentName">Tên HS:</label>
+                    <div id="studentCheckboxes">
+                        <div class="checkbox-item">
+                        </div>
+                    </div>
+                </div>
+                <div class="login-message">
+                    <p>Bạn cần đăng nhập hoặc đăng ký để tiếp tục</p>
+                </div>
+                <div class="auth-buttons">
+                    <a href="login.html" class="btn">Đăng Nhập</a>
+                    <a href="register.html" class="btn">Đăng Ký</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.querySelector("#btn");
+            const sidebar = document.querySelector(".sidebar");
+            const dropdownToggle = document.querySelector('.nav-link.dropdown-toggle');
+            const dropdownMenu = document.querySelector('.dropdown-menu');
+
+            btn.addEventListener('click', function() {
+                sidebar.classList.toggle("active");
+            });
+
+            dropdownToggle.addEventListener('click', function(event) {
+                event.preventDefault();
+                dropdownMenu.classList.toggle('show');
+            });
+
+            window.addEventListener('click', function(e) {
+                if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                    dropdownMenu.classList.remove('show');
+                }
+            });
+        });
+        document.getElementById('registerPickupBtn').addEventListener('click', function() {
+            // Check if user is logged in (you should replace this check with your actual login check)
+            var isLoggedIn = false; // Replace this with actual check
+
+            if (!isLoggedIn) {
+                // Show dialog if not logged in
+                document.getElementById('dialogContainer').style.display = 'flex';
+            } else {
+                // Proceed with the registration process (e.g., add pick-up details)
+                alert("Proceeding with pick-up registration...");
+            }
+        });
+
+        // Add event listener to close the dialog
+        document.getElementById('dialogContainer').addEventListener('click', function(event) {
+            if (event.target === this) {
+                this.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

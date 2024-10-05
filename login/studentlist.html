@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student List</title>
+    <link rel="stylesheet" href="css/style-studentlist.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+        body, html {
+        margin: 0;
+        padding: 0;
+        font-family: 'Open Sans', sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+    }
+
+    /* Header styles, incorporating flexbox for layout */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px; /* Adjust padding as needed */
+        background-color: #db4b23;
+        color: white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Container for navigation and auth buttons */
+    .nav-auth {
+        display: flex;
+        align-items: center;
+    }
+
+    /* Push auth buttons to the right */
+    .auth-buttons {
+        margin-left: auto; /* This will push the auth buttons to the right */
+        display: flex;
+    }
+
+    .auth-buttons a {
+        padding: 8px 16px; /* Adjust padding for better spacing */
+        margin-left: 10px; /* Space between buttons */
+        background-color: #e65c00;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+
+    .auth-buttons a:hover {
+        background-color: #cc5200;
+    }
+
+    .container {
+        max-width: 95%; /* Reduced to help ensure it fits in the viewport */
+        margin: 20px auto; /* Centering the container */
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        border-radius: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .header {
+            flex-direction: column;
+        }
+
+        .nav-auth {
+            width: 100%; /* Full width to accommodate smaller screens */
+            justify-content: space-between; /* Space out nav and auth buttons */
+        }
+
+        .auth-buttons {
+            margin-top: 10px; /* Add some space between nav items and auth buttons */
+        }
+    }
+
+
+
+    /* Main container styles for content area */
+    .container {
+        width: 90%;
+        max-width: 600px;
+        margin: 30px auto;
+        background: white;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        border-radius: 8px;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .container:hover {
+        transform: translateY(-5px);
+    }
+
+    /* Input group styles */
+    .input-group {
+        margin-bottom: 25px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-size: 14px;
+    }
+
+    input[type="text"], input[type="email"] {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 12px;
+        border: 1px solid #db4b23;
+        border-radius: 5px;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Button styles for form submission */
+    button {
+        width: 100%;
+        padding: 12px;
+        background-color: #db4b23;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: background-color 0.3s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+        background-color: #e06600;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+
+    /* Styles for the confirmation section */
+    .confirmation-section {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #e0ffe0;
+        border: 1px solid #b2ffb2;
+        color: #288828;
+        display: none;
+    }
+    .sidebar {
+        width: 70px; /* Collapsed width */
+        height: 100vh;
+        background-color: #db4b23;
+        color: white;
+        position: fixed;
+        left: 0;
+        top: 0;
+        transition: width 0.5s; /* Smooth transition for expanding/collapsing */
+        overflow-x: hidden; /* Hide overflow text */
+        z-index: 1000; /* Ensure it stays on top */
+        display: flex; /* Use Flexbox to align content */
+        flex-direction: column; /* Align children vertically */
+        align-items: center; /* Center items horizontally */
+        justify-content: center; /* Center items vertically */
+        }
+
+    /* Expanded sidebar styles */
+    .sidebar.active {
+        width: 250px; /* Expanded width */
+    }
+
+    /* Sidebar navigation list */
+    .sidebar ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        width: 100%; /* Full width for the list */
+    }
+
+    /* Sidebar navigation items */
+    .sidebar ul li {
+        width: 100%; /* Ensure each list item takes full width */
+        padding: 15px;
+        text-align: left;
+        transition: background-color 0.3s;
+        display: flex; /* Use flexbox for aligning items */
+        align-items: center; /* Center the icon and text vertically */
+        justify-content: flex-start; /* Align items to the left when expanded */
+    }
+
+    .sidebar ul li:hover {
+        background-color: #e65c00;
+    }
+
+    .sidebar ul li a {
+        text-decoration: none;
+        color: white;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Icon styles in sidebar */
+    .sidebar ul li a i {
+        margin-right: 20px;
+        font-size: 18px;
+    }
+
+    /* Text styles in sidebar */
+    .sidebar ul li a .nav-item {
+        opacity: 0; /* Hidden by default */
+        transition: opacity 0.5s; /* Smooth transition for text */
+    }
+
+    /* Show text when sidebar is expanded */
+    .sidebar.active ul li a .nav-item {
+        opacity: 1;
+    }
+
+    /* Adjust main container based on sidebar state */
+    .main-container {
+        margin-left: 70px; /* Margin when sidebar is collapsed */
+        transition: margin-left 0.5s;
+    }
+
+    .sidebar.active ~ .main-container {
+        margin-left: 250px; /* Adjust margin when sidebar is expanded */
+    }
+
+    /* Top bar styles */
+    .top {
+        position: absolute;
+        top: 15px;
+        left: 10px;
+        cursor: pointer;
+        color: white;
+    }
+
+    /* Responsive adjustments for smaller screens */
+    @media (max-width: 768px) {
+
+        .container {
+            width: 95%;
+            margin: 20px auto;
+        }
+    }
+
+    .main-container {
+        padding: 20px;
+        text-align: center;
+    }
+
+    /* Table Styling */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px auto;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+        padding: 8px 15px;
+        border: 1px solid #ccc;
+        text-align: left;
+    }
+
+    th {
+        background-color: #f0f0f0;
+    }
+
+    tr:nth-child(even) {
+        background-color: #fafafa;
+    }
+
+    td.no-students {
+        font-size: 18px;
+        color: #555;
+        text-align: center; /* Center text horizontally */
+        padding: 20px;
+        vertical-align: middle; /* Center content vertically */
+    }
+
+    /* Additional styling to center the buttons inside the table cell */
+    .auth-buttons {
+        display: flex;
+        justify-content: center; /* Center buttons horizontally */
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+
+
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <h1></h1>
+        <div class="auth-buttons">
+            <a href="login.html" class="btn" id="loginBtn">Đăng Nhập</a>
+            <a href="register.html" class="btn" id="registerBtn">Đăng Ký</a>
+        </div>
+    </header>
+    <div class="sidebar" id="sidebar">
+        <div class="top">
+            <i class="fas fa-bars" id="btn"></i>
+        </div>
+        <ul class="nav-list">
+            <li><a href="index.html"><i class="fas fa-home"></i> <span class="nav-item">Trang Chủ</span></a></li>
+            <li><a href="notification.html"><i class="fas fa-bell"></i> <span class="nav-item">Thông Báo</span></a></li>
+            <li><a href="profile.html"><i class="fas fa-user"></i> <span class="nav-item">Hồ Sơ</span></a></li>
+            <li><a href="studentlist.html"><i class="fas fa-child"></i> <span class="nav-item">Danh Sách Con</span></a></li>
+        </ul>
+    </div>
+
+    <div class="main-container">
+        <h2>Danh Sách Con</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Học sinh</th>
+                    <th>Lớp</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="3" class="no-students">
+                        Bạn cần đăng nhập hoặc đăng ký để xem danh sách học sinh.
+                        <div class="auth-buttons">
+                            <a href="login.html" class="btn">Đăng Nhập</a>
+                            <a href="register.html" class="btn">Đăng Ký</a>
+                        </div>
+                    </td>                    
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <script>document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.querySelector("#btn");
+        const sidebar = document.querySelector(".sidebar");
+        const dropdownToggle = document.querySelector('.nav-link.dropdown-toggle');
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+
+        btn.addEventListener('click', function() {
+            sidebar.classList.toggle("active");
+        });
+
+        dropdownToggle.addEventListener('click', function(event) {
+            event.preventDefault();
+            dropdownMenu.classList.toggle('show');
+        });
+
+        window.addEventListener('click', function(e) {
+            if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.classList.remove('show');
+            }
+        });
+    });
+    </script>
+</body>
+
+</html>

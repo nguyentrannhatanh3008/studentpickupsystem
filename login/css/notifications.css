@@ -1,0 +1,915 @@
+/* Base styles for the body and HTML */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Open Sans', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Header styles, incorporating flexbox for layout */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px; /* Adjust padding as needed */
+    background-color: #db4b23;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Container for navigation and auth buttons */
+.nav-auth {
+    display: flex;
+    align-items: center;
+}
+
+/* Push auth buttons to the right */
+.auth-buttons {
+    margin-left: auto; /* This will push the auth buttons to the right */
+    display: flex;
+}
+
+.auth-buttons a {
+    padding: 8px 16px; /* Adjust padding for better spacing */
+    margin-left: 10px; /* Space between buttons */
+    background-color: #e65c00;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.auth-buttons a:hover {
+    background-color: #cc5200;
+}
+
+.container {
+    max-width: 95%; /* Reduced to help ensure it fits in the viewport */
+    margin: 20px auto; /* Centering the container */
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+    }
+
+    .nav-auth {
+        width: 100%; /* Full width to accommodate smaller screens */
+        justify-content: space-between; /* Space out nav and auth buttons */
+    }
+
+    .auth-buttons {
+        margin-top: 10px; /* Add some space between nav items and auth buttons */
+    }
+}
+
+
+
+/* Main container styles for content area */
+.container {
+    width: 90%;
+    max-width: 600px;
+    margin: 30px auto;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    border-radius: 8px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.container:hover {
+    transform: translateY(-5px);
+}
+
+/* Input group styles */
+.input-group {
+    margin-bottom: 25px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 14px;
+}
+
+input[type="text"], input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #db4b23;
+    border-radius: 5px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+
+
+/* Styles for the confirmation section */
+.confirmation-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #e0ffe0;
+    border: 1px solid #b2ffb2;
+    color: #288828;
+    display: none;
+}
+
+
+input[type="datetime-local"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #db4b23;
+    border-radius: 5px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    background-color: #fff;
+    color: #333;
+}
+
+input[type="datetime-local"]:focus {
+    border-color: #e06600;
+    box-shadow: 0 0 8px rgba(255, 165, 0, 0.5);
+}
+
+
+.main-container {
+    display: flex; /* Flexbox layout to align children horizontally */
+    align-items: flex-start; /* Aligns children at the top */
+    justify-content: flex-start; /* Start from the left and move right */
+    max-width: 1200px; /* Maximum width of the container */
+    margin: 20px auto; /* Center the container with margin */
+    padding: 20px; /* Padding around the content */
+}
+
+.form-container {
+    flex: 1; /* Allows the form container to grow and take necessary space */
+    margin-right: 40px; /* Increase right margin to move dialog more to the right */
+}
+
+.input-group {
+    display: flex;
+    align-items: center; /* Align label and input on the same line */
+    margin-bottom: 15px;
+}
+
+label {
+    width: 60px; /* Shorter label width */
+    margin-right: 10px; /* Space between label and input */
+    font-weight: bold;
+    color: #333;
+}
+
+input[type="text"], input[type="datetime-local"] {
+    flex: 1; /* Allow input to take the remaining space */
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #db4b23;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        color: #333;
+        margin: 0;
+        padding: 0;
+    }
+
+    .header {
+        background-color: #db4b23;
+        padding: 15px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .auth-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+
+    .main-container {
+        margin-left: 240px;
+        padding: 20px;
+    }
+
+    .form-container {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+/* Dropdown Menu Styling */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    min-width: 160px;
+    padding: 10px 0;
+    margin: 2px 0 0;
+    font-size: 14px;
+    text-align: left;
+    list-style: none;
+    background-color: #db4b23;
+    color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+}
+
+/* Show the dropdown menu */
+.dropdown-menu.show {
+    display: block;
+}
+
+/* Dropdown button styles */
+.dropdown-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    padding: 8px 20px;
+    margin: 4px 0;
+    background-color: #db4b23;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Dropdown button hover effect */
+.dropdown-menu a:hover {
+    background-color: #e65c00;
+}
+
+/* Icon styling within dropdown items */
+.dropdown-menu a i {
+    margin-right: 10px;
+}
+
+
+.sidebar {
+width: 70px; /* Collapsed width */
+height: 100vh;
+background-color: #db4b23;
+color: white;
+position: fixed;
+left: 0;
+top: 0;
+transition: width 0.5s; /* Smooth transition for expanding/collapsing */
+overflow-x: hidden; /* Hide overflow text */
+z-index: 1000; /* Ensure it stays on top */
+display: flex; /* Use Flexbox to align content */
+flex-direction: column; /* Align children vertically */
+align-items: center; /* Center items horizontally */
+justify-content: center; /* Center items vertically */
+}
+
+/* Expanded sidebar styles */
+.sidebar.active {
+    width: 250px; /* Expanded width */
+}
+
+/* Sidebar navigation list */
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%; /* Full width for the list */
+}
+
+/* Sidebar navigation items */
+.sidebar ul li {
+    width: 100%; /* Ensure each list item takes full width */
+    padding: 15px;
+    text-align: left;
+    transition: background-color 0.3s;
+    display: flex; /* Use flexbox for aligning items */
+    align-items: center; /* Center the icon and text vertically */
+    justify-content: flex-start; /* Align items to the left when expanded */
+}
+
+.sidebar ul li:hover {
+    background-color: #e65c00;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: white;
+    display: flex;
+    align-items: center;
+}
+
+/* Icon styles in sidebar */
+.sidebar ul li a i {
+    margin-right: 20px;
+    font-size: 18px;
+}
+
+/* Text styles in sidebar */
+.sidebar ul li a .nav-item {
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.5s; /* Smooth transition for text */
+}
+
+/* Show text when sidebar is expanded */
+.sidebar.active ul li a .nav-item {
+    opacity: 1;
+}
+
+/* Adjust main container based on sidebar state */
+.main-container {
+    margin-left: 70px; /* Margin when sidebar is collapsed */
+    transition: margin-left 0.5s;
+}
+
+.sidebar.active ~ .main-container {
+    margin-left: 250px; /* Adjust margin when sidebar is expanded */
+}
+
+/* Top bar styles */
+.top {
+    position: absolute;
+    top: 15px;
+    left: 10px;
+    cursor: pointer;
+    color: white;
+}
+.container {
+    width: calc(100% - 20px); /* Increase width, adjust the margin for better fit */
+    margin: 0 auto; /* Center the container */
+    padding: 10px; /* Add some padding */
+    float: none; /* Remove float for better alignment */
+}
+
+/* Full width for the DataTable */
+.dataTable {
+    width: 100%; /* Full width */
+    margin: 0 auto; /* Center the table */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    border-collapse: separate; /* Ensures borders are spaced out */
+}
+
+/* Styling for DataTables container */
+.dataTables_wrapper {
+    width: 100%; /* Full width for container */
+    padding: 20px; /* Padding around the table */
+    background-color: white; /* Background color for the table area */
+    border-radius: 8px; /* Rounded corners */
+}
+
+/* Header row styling */
+.dataTable thead th {
+    background-color: #f96c20; /* Matching header background */
+    color: white; /* White text for headers */
+    padding: 10px; /* Padding in headers for spacing */
+    border-bottom: 2px solid #f96c20; /* Solid header underline */
+}
+
+/* Cell styling */
+.dataTable tbody td {
+    background-color: #fff; /* Background for table cells */
+    color: #333; /* Dark text for readability */
+    padding: 10px; /* Cell padding for spacing */
+    border-bottom: 1px solid #ccc; /* Subtle border for each cell */
+}
+
+/* Adjustments for DataTable controls */
+.dataTables_length,
+.dataTables_filter {
+    margin: 10px; /* Margin for spacing around controls */
+}
+
+.dataTables_length label,
+.dataTables_filter label {
+    color: #333; /* Text color for DataTable controls */
+}
+
+/* Styling for DataTable pagination */
+.dataTables_paginate {
+    float: right; /* Align pagination to the right */
+    margin-top: 10px; /* Top margin for alignment */
+}
+
+/* Hide DataTable's details to fit and avoid overflow */
+.dataTables_info,
+.dataTables_length,
+.dataTables_filter,
+.dataTables_paginate {
+    display: none; /* Hide elements not needed immediately */
+}
+
+/* Make the table more responsive */
+@media screen and (max-width: 768px) {
+    .dataTables_wrapper {
+        width: 100%; /* Ensure the table wrapper is full width on smaller screens */
+        overflow-x: auto; /* Allows table to scroll on small devices */
+    }
+}
+
+/* Main container for the notification panel */
+.container {
+    width: 90%; /* Increased width for larger display */
+    max-width: 1200px; /* Max width for larger screens */
+    margin: 30px auto; /* Center the container */
+    padding: 20px; /* Padding for spacing */
+    background-color: #fff; /* White background for the container */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+/* Notification header styling */
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 20px; /* Increased padding for more space */
+    background-color: #db4b23; /* Orange header background */
+    color: white; /* White text color */
+    border-radius: 4px; /* Rounded corners for header */
+    font-size: 1.2em; /* Larger font size for better visibility */
+}
+
+/* Table styling */
+.dataTable {
+    width: 100%; /* Full width of the container */
+    border-collapse: collapse; /* Remove space between borders */
+    margin-top: 20px; /* Margin above the table */
+    background-color: #fff; /* Background color for the table */
+    border-radius: 8px; /* Rounded corners */
+    overflow: hidden; /* Prevent overflow of table borders */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+/* Table header styling */
+.dataTable thead th {
+    background-color: #db4b23; /* Orange header background */
+    color: white; /* White text color */
+    padding: 12px; /* Padding for header cells */
+    text-align: left; /* Align text to the left */
+    font-weight: bold; /* Bold font for headers */
+    border-bottom: 2px solid #f96c20; /* Border for separation */
+}
+
+/* Table body styling */
+.dataTable tbody td {
+    padding: 14px; /* Increased padding for table cells */
+    border-bottom: 1px solid #ddd; /* Light gray border for rows */
+    color: #333; /* Dark text color for better readability */
+    text-align: left; /* Align text to the left */
+    font-size: 1em; /* Font size for better readability */
+}
+
+/* Hover effect for table rows */
+.dataTable tbody tr:hover {
+    background-color: #f1f1f1; /* Light gray background on hover */
+    cursor: pointer; /* Pointer cursor on hover */
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .container {
+        width: 95%; /* Adjust width for smaller screens */
+        padding: 15px; /* Adjust padding for smaller screens */
+    }
+
+    .notification-header {
+        flex-direction: column; /* Stack header items vertically */
+        align-items: flex-start; /* Align items to the left */
+        padding: 15px; /* Adjust padding for smaller screens */
+    }
+
+    .dataTable {
+        font-size: 0.9em; /* Smaller font size for smaller screens */
+    }
+}
+
+/* Notification row styles */
+.notification-unread {
+    background-color: #ffe0b2;
+    cursor: pointer;
+}
+
+.notification-read {
+    background-color: #fff;
+    cursor: pointer;
+}
+
+/* Icon color styles */
+.icon-orange {
+    color: orange;
+}
+
+.icon-gray {
+    color: gray;
+}
+
+/* ===============================
+   Base Table Styling
+   =============================== */
+
+/* Ensure the table uses Bootstrap's table classes */
+#notificationsTable {
+    width: 100%;
+    margin-top: 20px;
+}
+
+#notificationsTable th, #notificationsTable td {
+    text-align: center; /* Center align text */
+    vertical-align: middle; /* Center vertically */
+}
+
+#notificationsTable th {
+    background-color: #db4b23; /* Header background color */
+    color: #ffffff; /* Header text color */
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#notificationsTable tbody tr:nth-child(even) {
+    background-color: #f2f2f2; /* Zebra striping */
+}
+
+#notificationsTable tbody tr:hover {
+    background-color: #e9ecef; /* Hover effect */
+    cursor: pointer;
+}
+
+#notificationsTable tbody tr.selected {
+    background-color: #ffe6e0; /* Selected row color */
+}
+
+#notificationsTable td {
+    padding: 12px 15px;
+    font-size: 14px;
+    color: #333333;
+}
+
+/* No Notifications Row Styling */
+#notificationsTable tbody tr td[colspan="5"] {
+    text-align: center;
+    padding: 20px;
+    color: #777777;
+}
+
+/* ===============================
+   DataTables Component Styling
+   =============================== */
+
+/* Search Box Styling */
+.datatable-search {
+    margin-bottom: 15px;
+}
+
+.datatable-search label {
+    font-weight: bold;
+    color: #333333;
+}
+
+.datatable-search input {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Pagination Styling */
+.datatable-pagination .paginate_button {
+    padding: 6px 12px;
+    margin-left: 2px;
+    border: 1px solid #db4b23;
+    border-radius: 4px;
+    background-color: #db4b23;
+    color: #ffffff !important;
+}
+
+.datatable-pagination .paginate_button:hover {
+    background-color: #e65c00;
+    border-color: #e65c00;
+    color: #ffffff !important;
+}
+
+.datatable-pagination .paginate_button.current {
+    background-color: #f96c20 !important;
+    border-color: #f96c20 !important;
+    color: #ffffff !important;
+}
+
+/* DataTables Info Styling */
+.dataTables_info {
+    color: #333333;
+    font-size: 14px;
+}
+
+/* Sorting Indicators */
+#notificationsTable thead th.sorting::after,
+#notificationsTable thead th.sorting_asc::after,
+#notificationsTable thead th.sorting_desc::after {
+    font-family: 'Font Awesome 5 Free'; /* Ensure Font Awesome is loaded */
+    font-weight: 900;
+    margin-left: 5px;
+    content: '\f0dc'; /* Font Awesome sort icon */
+}
+
+#notificationsTable thead th.sorting_asc::after {
+    content: '\f0de'; /* Font Awesome sort-up icon */
+}
+
+#notificationsTable thead th.sorting_desc::after {
+    content: '\f0dd'; /* Font Awesome sort-down icon */
+}
+
+/* ===============================
+   Responsive Table Styling
+   =============================== */
+
+@media (max-width: 768px) {
+    #notificationsTable thead {
+        display: none;
+    }
+
+    #notificationsTable, #notificationsTable tbody, #notificationsTable tr, #notificationsTable td {
+        display: block;
+        width: 100%;
+    }
+
+    #notificationsTable tr {
+        margin-bottom: 15px;
+    }
+
+    #notificationsTable td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+    }
+
+    #notificationsTable td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 15px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: bold;
+    }
+}
+
+/* ===============================
+   Modal Styling Enhancements
+   =============================== */
+
+   .modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    background-color: #db4b23;
+    color: #ffffff;
+    border-bottom: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Ensures title and close button are on opposite ends */
+}
+
+.modal-title {
+    font-size: 20px;
+}
+
+.modal-body {
+    padding: 20px;
+    font-size: 16px;
+    color: #333333;
+}
+
+.modal-footer {
+    padding: 10px 20px;
+    border-top: none;
+}
+
+/* ===============================
+   Custom Button Styling
+   =============================== */
+
+/* Đã Đọc Button Styling */
+.btn-da-doc {
+    background-color: #db4b23;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-da-doc:hover {
+    background-color: #e65c00; /* Darker shade on hover */
+}
+
+/* Đóng Button Styling */
+.btn-dong {
+    background-color: #db4b23;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-dong:hover {
+    background-color: #e65c00; /* Darker shade on hover */
+}
+
+
+
+/* ===============================
+   Icon Styling
+   =============================== */
+
+.icon-gray {
+    color: #6c757d; /* Gray color for unread notifications */
+}
+
+.icon-orange {
+    color: #fd7e14; /* Orange color for read notifications */
+}
+
+/* ===============================
+   Accessibility Enhancements
+   =============================== */
+
+/* Focus States for Table Rows */
+#notificationsTable tbody tr:focus {
+    outline: 2px solid #db4b23;
+    background-color: #ffe6e0;
+}
+
+
+/* Table Row Hover Transition */
+#notificationsTable tbody tr {
+    transition: background-color 0.3s ease;
+}
+
+/* Modal Fade-In Effect */
+.modal.fade .modal-dialog {
+    -webkit-transform: translate(0, -25%);
+    -ms-transform: translate(0, -25%);
+    transform: translate(0, -25%);
+    transition: transform 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+    transform: translate(0, 0);
+}
+.modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    background-color: #db4b23;
+    color: #ffffff;
+    border-bottom: none;
+    position: relative; /* To position the close button absolutely within */
+    padding: 16px 24px; /* Adjusted padding for better spacing */
+}
+
+.modal-title {
+    font-size: 20px;
+    margin: 0; /* Remove default margin */
+}
+
+.modal-body {
+    padding: 20px;
+    font-size: 16px;
+    color: #333333;
+}
+
+.modal-footer {
+    padding: 10px 20px;
+    border-top: none;
+}
+
+
+.btn-da-doc {
+    background-color: #db4b23;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-da-doc:hover {
+    background-color: #e65c00; /* Darker shade on hover */
+}
+
+.btn-dong {
+    background-color: #db4b23;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-dong:hover {
+    background-color: #e65c00; /* Darker shade on hover */
+}
+
+/* Custom Close Button */
+.custom-close {
+    position: absolute;
+    top: 16px; /* Align with modal-header padding */
+    right: 24px; /* Align with modal-header padding */
+    background: transparent; /* Transparent background */
+    border: none; /* No border */
+    padding: 0; /* Remove default padding */
+    margin: 0; /* Remove default margin */
+    cursor: pointer; /* Pointer cursor on hover */
+    font-size: 1.5rem; /* Increased font size for visibility */
+    color: rgba(255, 255, 255, 0.6); /* Dimmed white */
+    transition: color 0.3s ease; /* Smooth transition on hover */
+}
+
+/* Hover and Active States */
+.custom-close:hover,
+.custom-close:focus,
+.custom-close:active {
+    color: #ffffff; /* Bright white on hover and active */
+    outline: none; /* Remove default focus outline */
+}
+
+/* Ensure the "×" is centered within the button */
+.custom-close span {
+    display: inline-block;
+    line-height: 1;
+}
+.delete-notification {
+    color: #dc3545; /* Màu đỏ cho nút xóa */
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.delete-notification:hover {
+    color: #a71d2a;
+}
+
+#markAsReadButton {
+    display: none; /* Ẩn mặc định, hiển thị khi có thông báo chưa đọc */
+}
+
+#markAsReadButton.show {
+    display: inline-block; /* Hiển thị khi được thêm lớp 'show' */
+}
+
+#markAllReadConfirmBtn{
+    background-color: #db4b23;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+#markAllReadConfirmBtn:hover {
+    background-color: #e65c00;
+}
+
+.btn-secondary{
+    background-color: #db4b23;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.btn-secondary:hover {
+    background-color: #e65c00;
+}
+

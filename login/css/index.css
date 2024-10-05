@@ -1,0 +1,684 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Open Sans', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Header styles, incorporating flexbox for layout */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px; /* Adjust padding as needed */
+    background-color: #db4b23;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Container for navigation and auth buttons */
+.nav-auth {
+    display: flex;
+    align-items: center;
+}
+
+/* Push auth buttons to the right */
+.auth-buttons {
+    margin-left: auto; /* This will push the auth buttons to the right */
+    display: flex;
+}
+
+.auth-buttons a {
+    padding: 8px 16px; /* Adjust padding for better spacing */
+    margin-left: 10px; /* Space between buttons */
+    background-color: #e65c00;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.auth-buttons a:hover {
+    background-color: #cc5200;
+}
+
+.container {
+    max-width: 95%; /* Reduced to help ensure it fits in the viewport */
+    margin: 20px auto; /* Centering the container */
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+    }
+
+    .nav-auth {
+        width: 100%; /* Full width to accommodate smaller screens */
+        justify-content: space-between; /* Space out nav and auth buttons */
+    }
+
+    .auth-buttons {
+        margin-top: 10px; /* Add some space between nav items and auth buttons */
+    }
+}
+
+
+
+/* Main container styles for content area */
+.container {
+    width: 90%;
+    max-width: 600px;
+    margin: 30px auto;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    border-radius: 8px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.container:hover {
+    transform: translateY(-5px);
+}
+
+/* Input group styles */
+.input-group {
+    margin-bottom: 25px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 14px;
+}
+
+input[type="text"], input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #db4b23;
+    border-radius: 5px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Button styles for form submission */
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #db4b23;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: background-color 0.3s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+    background-color: #e06600;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+/* Styles for the confirmation section */
+.confirmation-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #e0ffe0;
+    border: 1px solid #b2ffb2;
+    color: #288828;
+    display: none;
+}
+
+
+
+
+input[type="datetime-local"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #db4b23;
+    border-radius: 5px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    background-color: #fff;
+    color: #333;
+}
+
+input[type="datetime-local"]:focus {
+    border-color: #e06600;
+    box-shadow: 0 0 8px rgba(255, 165, 0, 0.5);
+}
+
+
+.main-container {
+    display: flex; /* Flexbox layout to align children horizontally */
+    align-items: flex-start; /* Aligns children at the top */
+    justify-content: flex-start; /* Start from the left and move right */
+    max-width: 1200px; /* Maximum width of the container */
+    margin: 20px auto; /* Center the container with margin */
+    padding: 20px; /* Padding around the content */
+}
+
+.form-container {
+    flex: 1; /* Allows the form container to grow and take necessary space */
+    margin-right: 40px; /* Increase right margin to move dialog more to the right */
+}
+
+.input-group {
+    display: flex;
+    align-items: center; /* Align label and input on the same line */
+    margin-bottom: 15px;
+}
+
+label {
+    width: 60px; /* Shorter label width */
+    margin-right: 10px; /* Space between label and input */
+    font-weight: bold;
+    color: #333;
+}
+
+input[type="text"], input[type="datetime-local"] {
+    flex: 1; /* Allow input to take the remaining space */
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #db4b23;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.dialog-container {
+    display: flex; /* Flexbox layout to align dialog boxes horizontally */
+    flex-wrap: wrap; /* Allows wrapping of dialogs if there's not enough space */
+    gap: 10px; /* Gap between dialog boxes */
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden; /* Hide overflow */
+}
+
+.dialog-box {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    min-width: 250px; /* Set a minimum width for dialogs */
+    max-width: 300px; /* Set a maximum width for dialogs */
+    margin-bottom: 10px; /* Space between dialogs vertically if they wrap */
+}
+
+.dialog-box h2 {
+    margin-top: 0;
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        flex-direction: column; /* Stack form and dialog vertically on small screens */
+    }
+
+    .form-container {
+        margin-right: 0; /* Remove right margin on small screens */
+        margin-bottom: 20px; /* Space between form and dialog when stacked */
+    }
+
+    .dialog-container {
+        width: 100%; /* Full width on smaller screens */
+        flex-direction: column; /* Stack dialogs vertically on small screens */
+    }
+}
+
+select#studentName {
+    width: 100%;
+    padding: 12px 20px; /* Increased padding for better size */
+    font-size: 18px; /* Larger font size */
+    border: 2px solid #db4b23; /* Primary color for the border */
+    border-radius: 6px; /* Smooth rounded corners */
+    background-color: #ffffff; /* White background */
+    color: #333333; /* Dark text color */
+    appearance: none; /* Remove default arrow */
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23db4b23" class="bi bi-caret-down-fill" viewBox="0 0 16 16"> <path d="M7.247 11.14l-4.796-5.481c-.566-.648-.106-1.659.76-1.659h9.588c.866 0 1.326 1.011.76 1.659l-4.796 5.481a1 1 0 0 1-1.518 0z"/> </svg>'); /* Custom arrow */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px; /* Adjust size of the dropdown arrow */
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s; /* Smooth transitions for border and shadow */
+}
+
+/* Hover effect for select */
+select#studentName:hover {
+    border-color: #e65c00; /* Change border color on hover */
+}
+
+/* Focus effect for select */
+select#studentName:focus {
+    outline: none; /* Remove default outline */
+    border-color: #cc5200; /* Orange border on focus */
+    box-shadow: 0 0 5px rgba(204, 82, 0, 0.5); /* Slight shadow for focus effect */
+}
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        color: #333;
+        margin: 0;
+        padding: 0;
+    }
+
+    .header {
+        background-color: #db4b23;
+        padding: 15px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .auth-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+
+    .main-container {
+        margin-left: 240px;
+        padding: 20px;
+    }
+
+    .form-container {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: flex-start;
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .checkbox-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        width: 100%; /* Ensures it uses the full width available */
+    }
+
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f0f0f5;
+        padding: 10px 20px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+        flex: 1 1 200px; /* Width of each checkbox container */
+        cursor: pointer;
+        position: relative;
+        text-align: center;
+        margin-bottom: 10px; /* Add margin bottom to create space */
+    }
+
+    .checkbox-item input[type="checkbox"] {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        transform: scale(1.5); /* Larger checkbox */
+        accent-color: #db4b23; /* Color for the checkbox */
+        cursor: pointer; /* Change cursor to pointer on hover */
+    }
+
+    .checkbox-item label {
+        font-size: 16px; /* Larger font size for labels */
+        white-space: nowrap; /* Prevent label text from wrapping */
+        margin-left: 30px; /* Ensure label text is not covered by checkbox */
+        cursor: pointer; /* Pointer cursor for label */
+        width: 100%;
+    }
+    
+    .auto-fill-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .auto-fill-box {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f4f4f9;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .auto-fill-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .dialog-box {
+        margin-top: 15px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #fff5e6;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+
+
+
+.sidebar {
+width: 70px; /* Collapsed width */
+height: 100vh;
+background-color: #db4b23;
+color: white;
+position: fixed;
+left: 0;
+top: 0;
+transition: width 0.5s; /* Smooth transition for expanding/collapsing */
+overflow-x: hidden; /* Hide overflow text */
+z-index: 1000; /* Ensure it stays on top */
+display: flex; /* Use Flexbox to align content */
+flex-direction: column; /* Align children vertically */
+align-items: center; /* Center items horizontally */
+justify-content: center; /* Center items vertically */
+}
+
+/* Expanded sidebar styles */
+.sidebar.active {
+    width: 250px; /* Expanded width */
+}
+
+/* Sidebar navigation list */
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%; /* Full width for the list */
+}
+
+/* Sidebar navigation items */
+.sidebar ul li {
+    width: 100%; /* Ensure each list item takes full width */
+    padding: 15px;
+    text-align: left;
+    transition: background-color 0.3s;
+    display: flex; /* Use flexbox for aligning items */
+    align-items: center; /* Center the icon and text vertically */
+    justify-content: flex-start; /* Align items to the left when expanded */
+}
+
+.sidebar ul li:hover {
+    background-color: #e65c00;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: white;
+    display: flex;
+    align-items: center;
+}
+
+/* Icon styles in sidebar */
+.sidebar ul li a i {
+    margin-right: 20px;
+    font-size: 18px;
+}
+
+/* Text styles in sidebar */
+.sidebar ul li a .nav-item {
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.5s; /* Smooth transition for text */
+}
+
+/* Show text when sidebar is expanded */
+.sidebar.active ul li a .nav-item {
+    opacity: 1;
+}
+
+/* Adjust main container based on sidebar state */
+.main-container {
+    margin-left: 70px; /* Margin when sidebar is collapsed */
+    transition: margin-left 0.5s;
+}
+
+.sidebar.active ~ .main-container {
+    margin-left: 250px; /* Adjust margin when sidebar is expanded */
+}
+
+/* Top bar styles */
+.top {
+    position: absolute;
+    top: 15px;
+    left: 10px;
+    cursor: pointer;
+    color: white;
+}
+/* Style for the history section */
+.history-section {
+    background-color: #ffffff;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Style for the table */
+#pickupHistoryTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    text-align: left; /* Align text to the left */
+}
+
+/* Style for the table header */
+#pickupHistoryTable th {
+    background-color: #db4b23;
+    color: #ffffff;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #e0e0e0;
+}
+
+/* Style for the table rows */
+#pickupHistoryTable td {
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+}
+
+/* Highlight every other row */
+#pickupHistoryTable tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    #pickupHistoryTable th, #pickupHistoryTable td {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+/* Style for the history section */
+.history-section {
+    background-color: #ffffff;
+    padding: 10px;
+    margin: 15px auto; /* Center the table */
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 1200px; /* Set maximum width for the table */
+}
+
+/* Style for the table */
+#pickupHistoryTable {
+    width: 100%; /* Full width within the restricted container */
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px; /* Smaller font size */
+}
+
+/* Style for the table header */
+#pickupHistoryTable th {
+    background-color: #db4b23;
+    color: #ffffff;
+    padding: 8px; /* Reduced padding */
+    font-size: 14px; /* Smaller font size */
+    border: 1px solid #e0e0e0;
+}
+
+/* Style for the table rows */
+#pickupHistoryTable td {
+    padding: 6px; /* Reduced padding */
+    border: 1px solid #e0e0e0;
+}
+
+/* Highlight every other row */
+#pickupHistoryTable tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+.no-history-message {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: #db4b23;
+    background-color: #ffe6e6;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    min-width: 160px;
+    padding: 10px 0;
+    margin: 2px 0 0;
+    font-size: 14px;
+    text-align: left;
+    list-style: none;
+    background-color: #db4b23;
+    color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+}
+
+/* Show the dropdown menu */
+.dropdown-menu.show {
+    display: block;
+}
+
+/* Dropdown button styles */
+.dropdown-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    padding: 8px 20px;
+    margin: 4px 0;
+    background-color: #db4b23;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Dropdown button hover effect */
+.dropdown-menu a:hover {
+    background-color: #e65c00;
+}
+
+/* Icon styling within dropdown items */
+.dropdown-menu a i {
+    margin-right: 10px;
+}
+.cancel-btn {
+    background-color: #ff0019; /* Màu đỏ của Bootstrap cho danger */
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.cancel-btn:hover {
+    background-color: #b90416; /* Màu đỏ đậm hơn khi hover */
+}
+
+/* Thêm một số tùy chỉnh cho bảng lịch sử */
+.history-section {
+    padding: 20px;
+}
+
+#pickupHistoryTable th, #pickupHistoryTable td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+#deleteSelectedBtn, #deleteAllBtn {
+    cursor: pointer;
+}
+
+
+/* Thêm một số tùy chỉnh cho bảng lịch sử */
+.history-section {
+    padding: 20px;
+}
+
+#pickupHistoryTable th, #pickupHistoryTable td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+#deleteSelectedBtn, #deleteAllBtn {
+    cursor: pointer;
+}
+
+/* Căn chỉnh nút xóa ở header */
+#deleteAllBtn {
+    margin-left: 10px;
+}
+
+/* Đảm bảo rằng các dòng không có checkbox và nút xóa được căn giữa */
+.no-history-message {
+    text-align: center;
+    font-style: italic;
+    color: #c82333;
+}
+.confirm-btn {
+    background-color: #4dab05;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.confirm-btn:hover {
+    background-color: #015d17; /* Màu đỏ đậm hơn khi hover */
+}
+.countdown {
+    font-weight: bold;
+    color: red;
+}
+
+
