@@ -11,5 +11,6 @@
             "email": "nhatanh30082010@gmail.com"
         }
     ],
+    "minimum-stability": "stable",
     "require": {}
 }
