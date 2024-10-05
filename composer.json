@@ -1,0 +1,15 @@
+{
+    "name": "nhata/khktproject",
+    "autoload": {
+        "psr-4": {
+            "Nhata\\Khktproject\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "nguyentrannhatanh3008",
+            "email": "nhatanh30082010@gmail.com"
+        }
+    ],
+    "require": {}
+}
