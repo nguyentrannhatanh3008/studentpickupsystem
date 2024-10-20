@@ -28,6 +28,8 @@ if (!$conn) {
 
 $isLoggedIn = isset($_SESSION['userid']);
 
+
+
 if ($isLoggedIn) {
     $userid = $_SESSION['userid'];
 
@@ -57,60 +59,90 @@ if ($isLoggedIn) {
 }
 
 
-// Kiểm tra nếu người dùng đã đăng nhập
-$userid = $_SESSION['userid'] ?? null;
-if (!$userid) {
-    // Xử lý yêu cầu AJAX cho người dùng chưa xác thực
+// Nếu người dùng chưa đăng nhập
+if (!$isLoggedIn) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Content-Type: application/json');
         ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'Người dùng chưa đăng nhập']);
         exit();
     } else {
-        // Chuyển hướng đối với yêu cầu không phải AJAX
-        header("Location: login.html");
+        header("Location: login.php");
         exit();
     }
 }
 
-// Xử lý đánh dấu tất cả thông báo đã đọc
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'mark_all_read') {
-    // Câu lệnh SQL để cập nhật tất cả thông báo chưa đọc thành đã đọc
-    $markAllReadQuery = "UPDATE public.notifications SET status = 'Đã Đọc' WHERE user_id = $1 AND status = 'Chưa đọc'";
-    $markAllReadResult = pg_query_params($conn, $markAllReadQuery, array($userid));
-    
-    header('Content-Type: application/json');
-    if ($markAllReadResult) {
-        $affectedRows = pg_affected_rows($markAllReadResult);
-        echo json_encode(['status' => 'success', 'updated' => $affectedRows]);
-    } else {
-        echo json_encode(['status' => 'error', 'message' => pg_last_error($conn)]);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Mark all as read
+    if (isset($_POST['action']) && $_POST['action'] === 'mark_all_read') {
+        $markAllReadQuery = "UPDATE public.notifications SET status = 'Đã Đọc' WHERE user_id = $1 AND status = 'Chưa đọc'";
+        $markAllReadResult = pg_query_params($conn, $markAllReadQuery, array($userid));
+
+        if ($markAllReadResult) {
+            $affectedRows = pg_affected_rows($markAllReadResult);
+            echo json_encode(['status' => 'success', 'updated' => $affectedRows]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => pg_last_error($conn)]);
+        }
+        pg_close($conn);
+        exit();
     }
-    pg_close($conn);
-    exit(); // Kết thúc thực thi script sau khi xử lý AJAX
-}
 
-// Xử lý đánh dấu một thông báo đã đọc
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notification_id'])) {
-    $notificationId = intval($_POST['notification_id']);
+    // Mark a single notification as read
+    if (isset($_POST['notification_id'])) {
+        $notificationId = intval($_POST['notification_id']);
 
-    // Cập nhật trạng thái thông báo thành 'Đã Đọc'
-    $updateQuery = "UPDATE public.notifications SET status = 'Đã Đọc' WHERE id = $1 AND user_id = $2";
-    $updateResult = pg_query_params($conn, $updateQuery, array($notificationId, $userid));
+        $updateQuery = "UPDATE public.notifications SET status = 'Đã Đọc' WHERE id = $1 AND user_id = $2";
+        $updateResult = pg_query_params($conn, $updateQuery, array($notificationId, $userid));
 
-    header('Content-Type: application/json');
-    if ($updateResult) {
-        if (pg_affected_rows($updateResult) > 0) {
+        if ($updateResult && pg_affected_rows($updateResult) > 0) {
             echo json_encode(['status' => 'success']);
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Không tìm thấy thông báo hoặc bạn không có quyền cập nhật.']);
         }
-    } else {
-        echo json_encode(['status' => 'error', 'message' => pg_last_error($conn)]);
+        pg_close($conn);
+        exit();
     }
-    pg_close($conn);
-    exit(); // Kết thúc thực thi script sau khi xử lý AJAX
+
+    // Delete multiple notifications
+    if (isset($_POST['delete_ids']) && is_array($_POST['delete_ids'])) {
+        $deleteIds = array_map('intval', $_POST['delete_ids']);
+
+        if (count($deleteIds) > 0) {
+            $placeholders = [];
+            $params = [];
+            foreach ($deleteIds as $index => $id) {
+                $placeholders[] = '$' . ($index + 1);
+                $params[] = $id;
+            }
+
+            $placeholders_str = implode(', ', $placeholders);
+            $deleteQuery = "DELETE FROM public.notifications WHERE id IN ($placeholders_str) AND user_id = $" . (count($deleteIds) + 1) . ";";
+            $params[] = $userid;
+
+            $deleteResult = pg_query_params($conn, $deleteQuery, $params);
+
+            if ($deleteResult) {
+                $affectedRows = pg_affected_rows($deleteResult);
+                if ($affectedRows > 0) {
+                    echo json_encode(['status' => 'success', 'deleted' => $affectedRows]);
+                } else {
+                    echo json_encode(['status' => 'error', 'message' => 'Không tìm thấy thông báo hoặc bạn không có quyền xóa.']);
+                }
+            } else {
+                echo json_encode(['status' => 'error', 'message' => pg_last_error($conn)]);
+            }
+            pg_close($conn);
+            exit();
+        }
+
+        echo json_encode(['status' => 'error', 'message' => 'Yêu cầu POST không hợp lệ.']);
+        pg_close($conn);
+        exit();
+    }
 }
+
+
 
 // Xử lý xóa nhiều thông báo
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ids']) && is_array($_POST['delete_ids'])) {
@@ -201,10 +233,10 @@ $notificationCount = ($notificationResult) ? pg_num_rows($notificationResult) : 
                     </li>
                 <?php else: ?>
                     <li class="nav-item">
-                        <a href="login.html" class="nav-link">Đăng Nhập</a>
+                        <a href="login.php" class="nav-link">Đăng Nhập</a>
                     </li>
                     <li class="nav-item">
-                        <a href="register.html" class="nav-link">Đăng Ký</a>
+                        <a href="register.php" class="nav-link">Đăng Ký</a>
                     </li>
                 <?php endif; ?>
             </ul>

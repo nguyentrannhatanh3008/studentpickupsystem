@@ -542,3 +542,8 @@ body, html {
 .btn-dong:hover {
     background-color: #e65c00;
 }
+.qr-code-container img {
+    width: 200px;
+    height: 200px;
+    border: 1px solid #000;
+}

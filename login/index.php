@@ -1,71 +1,133 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 session_start();
+
+// Cấu hình kết nối cơ sở dữ liệu
 $servername = "localhost";
-$username = "postgres";
-$password = "!xNq!TRWY.AuD9U";
+$username_db = "postgres";
+$password_db = "!xNq!TRWY.AuD9U";
 $dbname = "studentpickup";
+
+// Vô hiệu hóa hiển thị lỗi trực tiếp và chuyển sang ghi log
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+
+// Thiết lập múi giờ
+date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 // Bắt đầu bộ đệm đầu ra
 ob_start();
 
 // Kết nối tới cơ sở dữ liệu PostgreSQL
-$conn = pg_connect("host=$servername dbname=$dbname user=$username password=$password");
+$conn = pg_connect("host=$servername dbname=$dbname user=$username_db password=$password_db");
 
 if (!$conn) {
-    // Gửi phản hồi JSON nếu kết nối thất bại
+    // Ghi log lỗi và gửi phản hồi JSON
+    error_log('Kết nối thất bại: ' . pg_last_error());
     header('Content-Type: application/json');
     ob_clean();
-    echo json_encode(['status' => 'error', 'message' => 'Kết nối thất bại: ' . pg_last_error()]);
+    echo json_encode(['status' => 'error', 'message' => 'Kết nối cơ sở dữ liệu thất bại.']);
     exit();
 }
 
+// Kiểm tra đăng nhập
 $isLoggedIn = isset($_SESSION['userid']);
 
 if ($isLoggedIn) {
     $userid = $_SESSION['userid'];
-
-    // Lấy thông tin người dùng từ cơ sở dữ liệu
+    // Lấy thông tin người dùng
     $query = "SELECT * FROM public.user WHERE id = $1";
     $result = pg_query_params($conn, $query, array($userid));
 
     if ($result === false) {
-        echo "Lỗi truy vấn: " . pg_last_error($conn);
+        error_log("Lỗi truy vấn người dùng: " . pg_last_error($conn));
+        $isLoggedIn = false;
     } else {
         $user = pg_fetch_assoc($result);
         if (!$user) {
-            $isLoggedIn = false; // Nếu không tìm thấy người dùng, đặt trạng thái đăng nhập thành false
+            $isLoggedIn = false;
+        } else {
+            // Cập nhật role trong session
+            $_SESSION['role'] = $user['role'];
+            $role = $user['role'];
         }
     }
+
+    // Lấy số lượng thông báo chưa đọc
     $unreadCount = 0;
     $countQuery = "SELECT COUNT(*) AS unread FROM public.notifications WHERE user_id = $1 AND status = 'Chưa đọc'";
     $countResult = pg_query_params($conn, $countQuery, array($userid));
-    
+
     if ($countResult) {
         $countRow = pg_fetch_assoc($countResult);
         $unreadCount = intval($countRow['unread']);
     } else {
-        // Xử lý lỗi truy vấn nếu cần
-        $unreadCount = 0;
+        error_log("Lỗi truy vấn thông báo: " . pg_last_error($conn));
     }
 }
 
-// Kiểm tra nếu người dùng đã đăng nhập
-$userid = $_SESSION['userid'] ?? null;
-if (!$userid) {
-    // Xử lý yêu cầu AJAX cho người dùng chưa xác thực
+// Nếu người dùng chưa đăng nhập
+if (!$isLoggedIn) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Content-Type: application/json');
         ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'Người dùng chưa đăng nhập']);
         exit();
     } else {
-        // Chuyển hướng đối với yêu cầu không phải AJAX
-        header("Location: login.html");
+        header("Location: login.php");
         exit();
     }
+}
+
+
+// Hàm để gửi yêu cầu "Replay" đến Flask server
+function sendReplayToFlask($pickup_id, $student_id, $student_name) {
+    $url = 'http://localhost:5000/replay'; // Ensure Flask server is running at this address
+
+    $data = array(
+        'pickup_id' => $pickup_id,
+        'student_id' => $student_id,
+        'student_name' => $student_name
+    );
+
+    $payload = json_encode($data);
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5); // Timeout after 5 seconds
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Max execution time of 10 seconds
+
+    $result = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    if ($result === false) {
+        $error = curl_error($ch);
+        curl_close($ch);
+        return ['status' => 'error', 'message' => 'cURL Error: ' . $error];
+    }
+
+    curl_close($ch);
+
+    $response = json_decode($result, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return ['status' => 'error', 'message' => 'JSON Decode Error: ' . json_last_error_msg()];
+    }
+
+    if ($httpCode !== 200) {
+        $message = isset($response['message']) ? $response['message'] : 'HTTP Error: ' . $httpCode;
+        return ['status' => 'error', 'message' => $message];
+    }
+
+    // Ensure 'status' key exists
+    if (!isset($response['status'])) {
+        return ['status' => 'error', 'message' => 'Không nhận được trạng thái từ Flask server.'];
+    }
+
+    return $response;
 }
 
 // Xử lý yêu cầu POST (AJAX)
@@ -106,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
 
                         $responseArray[] = [
-                            'status' => 'success',
+                            'status' => 'Chờ xử lý',
                             'student_id' => $studentId,
                             'student_name' => $student['name'],
                             'class' => $student['class'],
@@ -139,15 +201,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Xử lý các hành động 'confirm' và 'cancel'
-    if (isset($_POST['action']) && isset($_POST['pickup_id'])) {
-        $pickupId = $_POST['pickup_id'];
+    // Xử lý các hành động 'confirm', 'cancel', 'replay', 'delete_pickups'
+    if (isset($_POST['action'])) {
         $action = $_POST['action'];
 
+        if (isset($_POST['pickup_id'])) {
+            $pickupId = intval($_POST['pickup_id']);
+        }
+
         if ($action === 'confirm') {
-            // Cập nhật trạng thái thành 'Đã đón' và lấy student_id và pickup_time
-            $query = "UPDATE public.pickup_history SET status = 'Đã đón', pickup_time = NOW() WHERE id = $1 AND user_id = $2 RETURNING student_id, pickup_time";
-            $result = pg_query_params($conn, $query, array($pickupId, $userid));
+            // Xử lý xác nhận
+            $query = "UPDATE public.pickup_history SET status = 'Đã đón', pickup_time = NOW() WHERE id = $1 RETURNING student_id, pickup_time";
+            $result = pg_query_params($conn, $query, array($pickupId));
 
             if ($result) {
                 $row = pg_fetch_assoc($result);
@@ -195,39 +260,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
         } elseif ($action === 'cancel') {
-            // Cập nhật trạng thái thành 'Đã hủy' và lấy student_id và pickup_time
-            $query = "UPDATE public.pickup_history SET status = 'Đã hủy' WHERE id = $1 AND user_id = $2 RETURNING student_id, pickup_time";
-            $result = pg_query_params($conn, $query, array($pickupId, $userid));
-        
+            // Xử lý hủy
+            $query = "UPDATE public.pickup_history SET status = 'Đã hủy' WHERE id = $1 RETURNING student_id";
+            $result = pg_query_params($conn, $query, array($pickupId));
+
             if ($result) {
                 $row = pg_fetch_assoc($result);
                 $studentId = $row['student_id'];
-                $pickupTime = $row['pickup_time'];
-        
+
                 // Lấy thông tin học sinh
                 $studentQuery = "SELECT name FROM public.student WHERE id = $1";
                 $studentResult = pg_query_params($conn, $studentQuery, array($studentId));
-        
+
                 if ($studentResult) {
                     $studentRow = pg_fetch_assoc($studentResult);
                     $studentName = $studentRow['name'];
-        
+
                     // Chuẩn bị nội dung thông báo
                     $notificationTitle = "Đã hủy đón";
                     $notificationMessage = "Yêu cầu đón cho học sinh " . $studentName . " đã bị hủy.";
                     $notificationStatus = "Chưa đọc";
-        
+
                     // Chèn thông báo vào bảng notifications
                     $notificationQuery = "INSERT INTO public.notifications (user_id, title, message, status, created_at) VALUES ($1, $2, $3, $4, NOW())";
                     $notificationResult = pg_query_params($conn, $notificationQuery, array($userid, $notificationTitle, $notificationMessage, $notificationStatus));
-        
+
                     if (!$notificationResult) {
                         header('Content-Type: application/json');
                         ob_clean();
                         echo json_encode(['status' => 'error', 'message' => 'Không thể chèn thông báo: ' . pg_last_error()]);
                         exit();
                     }
-        
+
                     header('Content-Type: application/json');
                     ob_clean();
                     echo json_encode(['status' => 'success', 'student_id' => $studentId]);
@@ -244,51 +308,161 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['status' => 'error', 'message' => 'Không thể cập nhật trạng thái đón: ' . pg_last_error()]);
                 exit();
             }
-        }
-    }
+        } elseif ($action === 'replay') {
+            // Xử lý phát lại
+            // Check if all required parameters are present
+            if (!isset($_POST['pickup_id']) || !isset($_POST['student_id']) || !isset($_POST['student_name'])) {
+                // Log the received POST data for debugging
+                error_log("Replay Action Missing Parameters: " . print_r($_POST, true));
 
-    // Xử lý yêu cầu xóa pickups
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_pickups' && isset($_POST['pickup_ids'])) {
-        $pickupIds = $_POST['pickup_ids'];
-
-        if (!is_array($pickupIds) || empty($pickupIds)) {
-            header('Content-Type: application/json');
-            ob_clean();
-            echo json_encode(['status' => 'error', 'message' => 'Danh sách pickup không hợp lệ.']);
-            exit();
-        }
-
-        // Chuẩn bị chuỗi để sử dụng trong câu truy vấn
-        $placeholders = [];
-        $params = [$userid]; // Tham số đầu tiên là user_id
-        $i = 2;
-        foreach ($pickupIds as $id) {
-            if (!is_numeric($id)) {
                 header('Content-Type: application/json');
                 ob_clean();
-                echo json_encode(['status' => 'error', 'message' => 'ID pickup không hợp lệ.']);
+                echo json_encode(['status' => 'error', 'message' => 'Thiếu tham số yêu cầu.']);
                 exit();
             }
-            $placeholders[] = '$' . $i++;
-            $params[] = $id;
-        }
-        $placeholders_str = implode(',', $placeholders);
 
-        // Truy vấn để xóa các pickups thuộc về người dùng
-        $deleteQuery = "DELETE FROM public.pickup_history WHERE user_id = $1 AND id IN ($placeholders_str)";
-        $result = pg_query_params($conn, $deleteQuery, $params);
+            $pickupId = intval($_POST['pickup_id']);
+            $studentId = intval($_POST['student_id']);
+            $studentName = trim($_POST['student_name']);
 
-        if ($result) {
-            $deletedCount = pg_affected_rows($result);
-            header('Content-Type: application/json');
-            ob_clean();
-            echo json_encode(['status' => 'success', 'deleted_count' => $deletedCount]);
-            exit();
-        } else {
-            header('Content-Type: application/json');
-            ob_clean();
-            echo json_encode(['status' => 'error', 'message' => 'Không thể xóa pickups: ' . pg_last_error($conn)]);
-            exit();
+            // Log the received parameters
+            error_log("Replay Action Received: pickup_id=$pickupId, student_id=$studentId, student_name=$studentName");
+
+            // Fetch last_replay_time and student_id from pickup_history
+            $query = "SELECT last_replay_time, student_id FROM public.pickup_history WHERE id = $1";
+            $result = pg_query_params($conn, $query, array($pickupId));
+
+            if ($result) {
+                $row = pg_fetch_assoc($result);
+                $lastReplayTime = $row['last_replay_time'] ? strtotime($row['last_replay_time']) : 0;
+                $currentTime = time();
+                $timeSinceLastReplay = $currentTime - $lastReplayTime;
+
+                if ($timeSinceLastReplay < 3 * 60) { // 3 minutes cooldown
+                    $remainingTime = 3 * 60 - $timeSinceLastReplay;
+                    $deadline = $currentTime + $remainingTime;
+                    $serverTime = $currentTime;
+
+                    header('Content-Type: application/json');
+                    ob_clean();
+                    echo json_encode([
+                        'status' => 'cooldown',
+                        'message' => 'Vui lòng chờ trước khi phát lại.',
+                        'deadline' => $deadline,
+                        'server_time' => $serverTime
+                    ]);
+                    exit();
+                } else {
+                    // Update last_replay_time
+                    $updateQuery = "UPDATE public.pickup_history SET last_replay_time = NOW() WHERE id = $1";
+                    $updateResult = pg_query_params($conn, $updateQuery, array($pickupId));
+
+                    if ($updateResult) {
+                        // Get student info
+                        $studentQuery = "SELECT name FROM public.student WHERE id = $1";
+                        $studentResult = pg_query_params($conn, $studentQuery, array($studentId));
+
+                        if ($studentResult) {
+                            $studentRow = pg_fetch_assoc($studentResult);
+                            $studentName = $studentRow['name'];
+
+                            // Send to Flask
+                            $replayResponse = sendReplayToFlask($pickupId, $studentId, $studentName);
+
+                            if ($replayResponse['status'] === 'success') {
+                                header('Content-Type: application/json');
+                                ob_clean();
+                                echo json_encode([
+                                    'status' => 'success',
+                                    'deadline' => $currentTime + 3 * 60,
+                                    'server_time' => $currentTime
+                                ]);
+                                exit();
+                            } else {
+                                $errorMessage = isset($replayResponse['message']) ? $replayResponse['message'] : 'Không thể gửi yêu cầu phát lại.';
+                                error_log("Error in sendReplayToFlask: $errorMessage");
+                                header('Content-Type: application/json');
+                                ob_clean();
+                                echo json_encode([
+                                    'status' => 'error',
+                                    'message' => 'Không thể gửi yêu cầu phát lại: ' . $errorMessage
+                                ]);
+                                exit();
+                            }
+                        } else {
+                            header('Content-Type: application/json');
+                            ob_clean();
+                            echo json_encode(['status' => 'error', 'message' => 'Không thể lấy thông tin học sinh: ' . pg_last_error($conn)]);
+                            exit();
+                        }
+                    } else {
+                        error_log("Failed to update last_replay_time for pickup_id $pickupId: " . pg_last_error($conn));
+                        header('Content-Type: application/json');
+                        ob_clean();
+                        echo json_encode(['status' => 'error', 'message' => 'Không thể cập nhật thời gian phát lại: ' . pg_last_error($conn)]);
+                        exit();
+                    }
+                }
+            } else {
+                error_log("Failed to fetch pickup_history for pickup_id $pickupId: " . pg_last_error($conn));
+                header('Content-Type: application/json');
+                ob_clean();
+                echo json_encode(['status' => 'error', 'message' => 'Không thể lấy thông tin yêu cầu đón: ' . pg_last_error($conn)]);
+                exit();
+            }
+        } elseif ($action === 'delete_pickups') {
+            // Xử lý yêu cầu xóa pickups
+            if (isset($_POST['pickup_ids'])) {
+                $pickupIds = $_POST['pickup_ids'];
+
+                if (!is_array($pickupIds) || empty($pickupIds)) {
+                    header('Content-Type: application/json');
+                    ob_clean();
+                    echo json_encode(['status' => 'error', 'message' => 'Danh sách pickup không hợp lệ.']);
+                    exit();
+                }
+
+                // Chuẩn bị chuỗi để sử dụng trong câu truy vấn
+                $placeholders = [];
+                $params = []; // Không cần user_id vì phụ huynh có thể xóa tất cả pickups của mình
+                $i = 1;
+                foreach ($pickupIds as $id) {
+                    if (!is_numeric($id)) {
+                        header('Content-Type: application/json');
+                        ob_clean();
+                        echo json_encode(['status' => 'error', 'message' => 'ID pickup không hợp lệ.']);
+                        exit();
+                    }
+                    $placeholders[] = '$' . $i++;
+                    $params[] = $id;
+                }
+                $placeholders_str = implode(',', $placeholders);
+
+                // Truy vấn để xóa các pickups
+                $deleteQuery = "DELETE FROM public.pickup_history WHERE id IN ($placeholders_str) AND student_id IN (SELECT id FROM public.student WHERE FPN = $".($i)." OR MPN = $".($i+1).")";
+                // Append FPN and MPN to params
+                $params[] = $user['phone'];
+                $params[] = $user['phone'];
+                $result = pg_query_params($conn, $deleteQuery, $params);
+
+                if ($result) {
+                    $deletedCount = pg_affected_rows($result);
+                    header('Content-Type: application/json');
+                    ob_clean();
+                    echo json_encode(['status' => 'success', 'deleted_count' => $deletedCount]);
+                    exit();
+                } else {
+                    header('Content-Type: application/json');
+                    ob_clean();
+                    echo json_encode(['status' => 'error', 'message' => 'Không thể xóa pickups: ' . pg_last_error($conn)]);
+                    exit();
+                }
+            } else {
+                header('Content-Type: application/json');
+                ob_clean();
+                echo json_encode(['status' => 'error', 'message' => 'Thiếu tham số yêu cầu.']);
+                exit();
+            }
         }
     }
 
@@ -299,40 +473,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit();
 }
 
-// Tiếp tục với việc hiển thị trang
-
-$historyArray = [];
-
-$historyQuery = "SELECT p.id, s.name AS student_name, s.class, p.created_at, p.status, p.pickup_time
-                 FROM public.pickup_history p
-                 JOIN public.student s ON p.student_id = s.id
-                 WHERE p.user_id = $1
-                 ORDER BY p.created_at DESC";
-$historyResult = pg_query_params($conn, $historyQuery, array($userid));
-
-if ($historyResult) {
-    while ($row = pg_fetch_assoc($historyResult)) {
-        $historyArray[] = $row;
-    }
-} else {
-    error_log("Không thể lấy lịch sử đón: " . pg_last_error());
-}
-
-// Lấy học sinh liên quan đến người dùng
+// Lấy danh sách học sinh liên quan đến phụ huynh
+// Dựa trên FPN hoặc MPN của người dùng
 $studentQuery = "SELECT * FROM public.student WHERE FPN = $1 OR MPN = $1";
-$result = pg_query_params($conn, $studentQuery, array($user['phone']));
+$studentResult = pg_query_params($conn, $studentQuery, array($user['phone']));
 
-if ($result === false) {
+if ($studentResult === false) {
     error_log("Không thể lấy danh sách học sinh: " . pg_last_error($conn));
 }
 
-// Lấy đón đang chờ xử lý
-$pendingPickupsQuery = "SELECT p.id AS pickup_id, s.name AS student_name, s.class, date_trunc('second', p.created_at) AS created_at
+// Lấy lịch sử đón để hiển thị trên trang
+$historyQuery = "SELECT p.id AS pickup_id, s.id AS student_id, s.name AS student_name, s.class, p.created_at, p.status, p.last_replay_time
+                FROM public.pickup_history p
+                JOIN public.student s ON p.student_id = s.id
+                WHERE s.FPN = $1 OR s.MPN = $1
+                ORDER BY p.created_at DESC";
+
+$historyResult = pg_query_params($conn, $historyQuery, array($user['phone']));
+
+if (!$historyResult) {
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'error', 'message' => 'Failed to fetch pickup history.']);
+    exit();
+}
+
+$history = [];
+while ($row = pg_fetch_assoc($historyResult)) {
+    $history[] = [
+        'pickup_id' => $row['pickup_id'],
+        'student_id' => $row['student_id'],
+        'student_name' => $row['student_name'],
+        'class' => $row['class'],
+        'created_at' => $row['created_at'],
+        'status' => $row['status'],
+        'replay_deadline' => $row['last_replay_time'] ? strtotime($row['last_replay_time']) + (3 * 60) : 0 // 3 minutes cooldown
+    ];
+}
+
+$pendingPickupsQuery = "SELECT p.id AS pickup_id, s.name AS student_name, s.class, date_trunc('second', p.created_at) AS created_at, p.student_id, p.status, p.last_replay_time
                         FROM public.pickup_history p
                         JOIN public.student s ON p.student_id = s.id
-                        WHERE p.user_id = $1 AND p.status = 'Chờ xử lý'
+                        WHERE (s.FPN = $1 OR s.MPN = $1) AND p.status = 'Chờ xử lý'
                         ORDER BY p.created_at DESC";
-$pendingPickupsResult = pg_query_params($conn, $pendingPickupsQuery, array($userid));
+$pendingPickupsResult = pg_query_params($conn, $pendingPickupsQuery, array($user['phone']));
 
 $pendingPickups = [];
 
@@ -343,18 +526,25 @@ if ($pendingPickupsResult) {
 
         $pendingPickups[] = [
             'pickup_id' => $row['pickup_id'],
+            'student_id' => $row['student_id'],
             'student_name' => $row['student_name'],
             'class' => $row['class'],
-            'created_at' => $created_at
+            'created_at' => $created_at,
+            'status' => $row['status'],
+            'replay_deadline' => $row['last_replay_time'] ? strtotime($row['last_replay_time']) + (3 * 60) : 0 // 3 minutes cooldown
         ];
     }
 } else {
     error_log("Không thể lấy đón đang chờ xử lý: " . pg_last_error($conn));
 }
 
+// Lấy danh sách học sinh bị khóa (đã đăng ký đón và đang chờ xử lý)
+$disabledQuery = "SELECT DISTINCT p.student_id FROM public.pickup_history p
+                  JOIN public.student s ON p.student_id = s.id
+                  WHERE (s.FPN = $1 OR s.MPN = $1) AND p.status = 'Chờ xử lý'";
+$disabledResult = pg_query_params($conn, $disabledQuery, array($user['phone']));
+
 $disabledStudents = [];
-$disabledQuery = "SELECT DISTINCT student_id FROM public.pickup_history WHERE user_id = $1 AND status = 'Chờ xử lý'";
-$disabledResult = pg_query_params($conn, $disabledQuery, array($userid));
 
 if ($disabledResult) {
     while ($row = pg_fetch_assoc($disabledResult)) {
@@ -364,21 +554,21 @@ if ($disabledResult) {
     error_log("Không thể lấy danh sách học sinh bị khóa: " . pg_last_error($conn));
 }
 
+if (ob_get_length()) {
+    ob_end_clean();
+}
 ?>
-
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
+    <!-- Các thẻ meta và liên kết CSS -->
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Pick-Up System</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
@@ -401,10 +591,10 @@ if ($disabledResult) {
                     </li>
                 <?php else: ?>
                     <li class="nav-item">
-                        <a href="login.html" class="nav-link">Đăng Nhập</a>
+                        <a href="login.php" class="nav-link">Đăng Nhập</a>
                     </li>
                     <li class="nav-item">
-                        <a href="register.html" class="nav-link">Đăng Ký</a>
+                        <a href="register.php" class="nav-link">Đăng Ký</a>
                     </li>
                 <?php endif; ?>
             </ul>
@@ -437,8 +627,8 @@ if ($disabledResult) {
                 <div class="input-group">
                     <div id="studentCheckboxes">
                         <?php 
-                        if ($user) {
-                            while ($row = pg_fetch_assoc($result)) : ?>
+                        if ($user && $studentResult) {
+                            while ($row = pg_fetch_assoc($studentResult)) : ?>
                                 <div class="checkbox-item">
                                     <input type="checkbox" id="student_<?php echo htmlspecialchars($row['id']); ?>" 
                                         name="students[]" 
@@ -454,27 +644,30 @@ if ($disabledResult) {
                         } ?>
                     </div>
                 </div>
-                <button type="submit" name="registerPickup">Đón Con</button>
+                <button type="submit" name="registerPickup" class="btn btn-primary mt-3">
+                    Đón Con
+                </button>
             </form>
         </div>
         <div class="auto-fill-container" id="autoFillContainer"></div>
         <div id="dialogContainer" class="dialog-container">
-            <?php foreach ($pendingPickups as $pickup): ?>
-                <div class="dialog-box">
-                    <h2>Thông tin đón con</h2>
-                    <p><strong>Tên:</strong> <?php echo htmlspecialchars($pickup['student_name']); ?></p>
-                    <p><strong>Lớp:</strong> <?php echo htmlspecialchars($pickup['class']); ?></p>
-                    <p><strong>Thời gian:</strong> <?php echo htmlspecialchars($pickup['created_at']); ?></p>
-                    <p><strong>Trạng thái:</strong> <span id="dialog_status_<?php echo htmlspecialchars($pickup['pickup_id']); ?>" style="color: orange;">Chờ xử lý</span></p>
-                    <button type="button" data-pickup-id="<?php echo htmlspecialchars($pickup['pickup_id']); ?>" class="confirm-btn btn btn-success">Xác nhận</button>
-                    <button type="button" data-pickup-id="<?php echo htmlspecialchars($pickup['pickup_id']); ?>" class="cancel-btn btn btn-warning">Hủy</button>
-                </div>
-            <?php endforeach; ?>
+        <?php foreach ($pendingPickups as $pickup): ?>
+            <div class="dialog-box" id="dialog_<?php echo htmlspecialchars($pickup['pickup_id']); ?>">
+                <h2>Thông tin đón con</h2>
+                <p><strong>Tên:</strong> <?php echo htmlspecialchars($pickup['student_name']); ?></p>
+                <p><strong>Lớp:</strong> <?php echo htmlspecialchars($pickup['class']); ?></p>
+                <p><strong>Thời gian:</strong> <?php echo htmlspecialchars($pickup['created_at']); ?></p>
+                <p><strong>Trạng thái:</strong> <span id="dialog_status_<?php echo htmlspecialchars($pickup['pickup_id']); ?>" style="color: orange;">Chờ xử lý</span></p>
+                <button type="button" data-pickup-id="<?php echo htmlspecialchars($pickup['pickup_id']); ?>" data-student-id="<?php echo htmlspecialchars($pickup['student_id']); ?>" class="confirm-btn btn btn-success">Xác nhận</button>
+                <button type="button" data-pickup-id="<?php echo htmlspecialchars($pickup['pickup_id']); ?>" data-student-id="<?php echo htmlspecialchars($pickup['student_id']); ?>" class="cancel-btn btn btn-warning">Hủy</button>
+                <button type="button" data-pickup-id="<?php echo htmlspecialchars($pickup['pickup_id']); ?>" data-student-id="<?php echo htmlspecialchars($pickup['student_id']); ?>" class="replay-btn btn btn-info">Phát lại</button>
+            </div>
+        <?php endforeach; ?>
         </div>
 
     </div>
     <div class="history-section">
-        <h2>Pickup History</h2>
+        <h2>Lịch Sử Đón</h2>
         <!-- Nút xóa đã chọn -->
         <button id="deleteSelectedBtn" class="btn btn-danger mb-3" style="display: none;">
             <i class="fas fa-trash-alt"></i> Xóa các mục đã chọn
@@ -490,55 +683,110 @@ if ($disabledResult) {
                     <th>Lớp</th>
                     <th>Thời Gian Đón</th>
                     <th>Trạng Thái</th>
+                    <th>Thời gian còn lại</th>
                     <th>Hành Động</th>
                 </tr>
             </thead>
             <tbody id="pickupHistoryBody">
-            <?php
-                $historyQuery = "SELECT p.id, s.name AS student_name, s.class, p.created_at, p.status, p.pickup_time
-                FROM public.pickup_history p
-                JOIN public.student s ON p.student_id = s.id
-                WHERE p.user_id = $1
-                ORDER BY p.created_at DESC";
-                $historyResult = pg_query_params($conn, $historyQuery, array($userid));
-
-                if ($historyResult === false) {
-                    error_log("Failed to execute history query: " . pg_last_error($conn));
-                    echo "<tr><td colspan='6'>Error fetching history.</td></tr>";
-                } else {
-                    if (pg_num_rows($historyResult) > 0) {
+                <?php
+                    if ($historyResult && pg_num_rows($historyResult) > 0) {
                         while ($row = pg_fetch_assoc($historyResult)) {
-                            $dt = new DateTime($row['created_at']);
-                            $created_at = $dt->format('Y-m-d H:i:s');
+                            $pickupId = htmlspecialchars($row['pickup_id']);
+                            $studentId = htmlspecialchars($row['student_id']);
+                            $studentName = htmlspecialchars($row['student_name']);
+                            $studentClass = htmlspecialchars($row['class']);
+                            $createdAt = new DateTime($row['created_at']);
+                            $created_at_formatted = $createdAt->format('Y-m-d H:i:s');
 
-                            // Kiểm tra trạng thái
-                            $isPending = strtolower($row['status']) === 'Chờ xử lý';
+                            // Calculate expiration time (24 hours from created_at)
+                            $expirationTime = clone $createdAt;
+                            $expirationTime->modify('+1 day');
+                            $now = new DateTime();
 
-                            echo "<tr id='row_" . htmlspecialchars($row['id']) . "'>";
-                            if ($isPending) {
-                                // Không hiển thị checkbox và nút xóa cho mục Pending
-                                echo "<td></td>";
+                            $interval = $now->diff($expirationTime);
+                            $isExpired = $now >= $expirationTime;
+
+                            // Check status
+                            $status = htmlspecialchars($row['status']);
+                            $isPending = strtolower($status) === 'chờ xử lý';
+
+                            // Calculate remaining cooldown time for "Replay" button
+                            $cooldownPeriod = 3 * 60; // 3 minutes in seconds
+                            if ($row['last_replay_time']) {
+                                $lastReplayTime = new DateTime($row['last_replay_time']);
+                                $timeSinceLastReplay = $now->getTimestamp() - $lastReplayTime->getTimestamp();
                             } else {
-                                echo "<td><input type='checkbox' class='row-checkbox' data-pickup-id='" . htmlspecialchars($row['id']) . "'></td>";
+                                $timeSinceLastReplay = PHP_INT_MAX; // Nếu chưa bao giờ phát lại, cho phép phát lại
                             }
-                            echo "<td>" . htmlspecialchars($row['student_name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['class']) . "</td>";
-                            echo "<td>" . htmlspecialchars($created_at) . "</td>";
-                            echo "<td id='status_" . htmlspecialchars($row['id']) . "'>" . htmlspecialchars($row['status']) . "</td>";
-                            echo "<td><button class='btn btn-sm btn-danger delete-btn' data-pickup-id='" . htmlspecialchars($row['id']) . "'><i class='fas fa-trash-alt'></i></button></td>";
+
+                            if ($timeSinceLastReplay < $cooldownPeriod) {
+                                $replayCooldownRemaining = $cooldownPeriod - $timeSinceLastReplay;
+                            } else {
+                                $replayCooldownRemaining = 0;
+                            }
+
+                            echo "<tr id='row_$pickupId'>";
+
+                            // Only display checkbox if expired and not pending
+                            if ($isExpired && !$isPending) {
+                                echo "<td><input type='checkbox' class='row-checkbox' data-pickup-id='$pickupId'></td>";
+                            } else {
+                                echo "<td></td>";
+                            }
+
+                            echo "<td><span class='student-name' data-student-name='$studentName'>$studentName</span></td>";
+                            echo "<td><span class='student-class' data-student-class='$studentClass'>$studentClass</span></td>";
+                            echo "<td>$created_at_formatted</td>";
+                            echo "<td id='status_$pickupId'>$status</td>";
+
+                            // Display remaining time or 'Expired'
+                            if (!$isExpired) {
+                                // Remaining time
+                                $remainingTime = '';
+                                if ($interval->d > 0) {
+                                    $remainingTime .= $interval->d . ' ngày ';
+                                }
+                                if ($interval->h > 0) {
+                                    $remainingTime .= $interval->h . ' giờ ';
+                                }
+                                if ($interval->i > 0) {
+                                    $remainingTime .= $interval->i . ' phút ';
+                                }
+                                if ($interval->s > 0) {
+                                    $remainingTime .= $interval->s . ' giây';
+                                }
+
+                                echo "<td id='countdown_$pickupId' data-expiration='" . $expirationTime->format('Y-m-d H:i:s') . "'>$remainingTime</td>";
+                            } else {
+                                echo "<td>Đã hết hạn</td>";
+                            }
+
+                            // Delete and Action buttons
+                            echo "<td>";
+                            if ($isExpired && !$isPending) {
+                                echo "<button class='btn btn-sm btn-danger delete-btn' data-pickup-id='$pickupId'><i class='fas fa-trash-alt'></i> Xóa</button>";
+                            }
+                            if ($isPending) {
+                                if ($replayCooldownRemaining > 0) {
+                                    // "Replay" button disabled with countdown
+                                    $cooldownText = gmdate("i:s", $replayCooldownRemaining);
+                                    echo "<button class='btn btn-sm btn-info replay-btn' data-pickup-id='$pickupId' data-student-id='$studentId' data-cooldown='$replayCooldownRemaining' disabled>Phát lại ($cooldownText)</button>";
+                                } else {
+                                    // "Replay" button enabled
+                                    echo "<button class='btn btn-sm btn-info replay-btn' data-pickup-id='$pickupId' data-student-id='$studentId'><i class='fas fa-redo'></i> Phát lại</button>";
+                                }
+                            }
+                            echo "</td>";
+
                             echo "</tr>";
                         }
-                    } else {
-                        echo "<tr id='noHistoryRow'><td colspan='6' class='no-history-message'>Không tìm thấy lịch sử.</td></tr>";
                     }
-                }
-            ?>
+                ?>
             </tbody>
         </table>
     </div>
-    
 
-        <?php if (isset($_SESSION['success_message'])): ?>
+    <?php if (isset($_SESSION['success_message'])): ?>
         <div class="alert alert-success">
             <?php echo htmlspecialchars($_SESSION['success_message']); ?>
         </div>
@@ -552,9 +800,25 @@ if ($disabledResult) {
     <?php endif; ?>
 
 
+    <!-- Tải jQuery trước -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+    <!-- Tải Bootstrap JavaScript sau jQuery -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Tải DataTables sau jQuery -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
+    <!-- Tải Socket.io -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"></script>
+
+    <!-- Tải FontAwesome -->
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+
+    <!-- Tải mã JavaScript của bạn cuối cùng -->
     <script src="js/index.js"></script>
 </body>
-
 </html>
 
 <?php

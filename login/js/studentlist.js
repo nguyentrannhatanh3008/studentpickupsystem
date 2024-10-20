@@ -1,34 +1,5 @@
 $(document).ready(function() {
-    const btn = $("#btn");
-    const sidebar = $(".sidebar");
-    const dropdownToggle = $('.nav-link.dropdown-toggle');
-    const dropdownMenu = $('.dropdown-menu');
-
-    // Toggle sidebar on button click
-    if (btn.length) {
-        btn.on('click', function () {
-            sidebar.toggleClass("active");
-        });
-    }
-
-    // Toggle dropdown menu on dropdownToggle click
-    if (dropdownToggle.length) {
-        dropdownToggle.on('click', function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            dropdownMenu.toggleClass('show');
-        });
-    }
-
-    // Close dropdown when clicking outside
-    $(window).on('click', function(e) {
-        if (!dropdownToggle.is(e.target) && dropdownToggle.has(e.target).length === 0 &&
-            !dropdownMenu.is(e.target) && dropdownMenu.has(e.target).length === 0) {
-            dropdownMenu.removeClass('show');
-        }
-    });
-
-    // Initialize DataTables for the Student List Table
+    // Khởi tạo DataTable
     $('#studentListTable').DataTable({
         "paging": true,
         "searching": true,
@@ -58,31 +29,56 @@ $(document).ready(function() {
 
     // Handle click event on student rows
     $('#studentListTable tbody').on('click', 'tr.student-row', function() {
-        const $row = $(this);
-        const studentId = $row.data('student-id');
+        // Get student data from data attributes
+        const studentId = $(this).data('student-id');
+        const studentName = $(this).data('student-name');
+        const studentClass = $(this).find('td:nth-child(3)').text();
 
-        // Fetch and display student details via AJAX
-        $.ajax({
-            url: 'fetch_student_details.php', // Ensure this PHP script exists and handles the request
-            method: 'POST',
-            dataType: 'json',
-            data: { student_id: studentId },
-            success: function(data) {
-                if (data.status === 'success') {
-                    // Populate modal with student details
-                    $('#studentName').text(data.student.name);
-                    $('#studentClass').text(data.student.class);
-                    // Show modal
-                    $('#studentDetailsModal').modal('show');
-                } else {
-                    console.error('Error fetching student details:', data.message);
-                    alert('Không thể lấy thông tin học sinh.');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', error);
-                alert('Đã xảy ra lỗi khi lấy thông tin học sinh.');
-            }
-        });
+        // Update modal content
+        $('#studentName').text(studentName);
+        $('#studentClass').text(studentClass);
+
+        // Set the QR code image src to get_qr.php
+        const qrCodeURL = `get_qr.php?student_id=${studentId}`;
+
+        // Set the QR code image src
+        $('#studentQRCode').attr('src', qrCodeURL);
+
+        // Show the modal
+        $('#studentDetailsModal').modal('show');
     });
+
+    // Sidebar toggle
+    const btn = $("#btn");
+    const sidebar = $(".sidebar");
+    const dropdownToggle = $('.nav-link.dropdown-toggle');
+    const dropdownMenu = $('.dropdown-menu');
+
+    // Toggle sidebar on button click
+    if (btn.length) {
+        btn.on('click', function () {
+            sidebar.toggleClass("active");
+        });
+    }
+
+    // Toggle dropdown menu on dropdownToggle click
+    if (dropdownToggle.length) {
+        dropdownToggle.on('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            dropdownMenu.toggleClass('show');
+        });
+    }
+
+    // Close dropdown when clicking outside
+    $(window).on('click', function(e) {
+        if (!dropdownToggle.is(e.target) && dropdownToggle.has(e.target).length === 0 &&
+            !dropdownMenu.is(e.target) && dropdownMenu.has(e.target).length === 0) {
+            dropdownMenu.removeClass('show');
+        }
+    });
+
+    setInterval(function(){
+        location.reload();
+    }, 5000);
 });

@@ -1,44 +1,38 @@
-from flask import Flask, request, jsonify
-import threading
-from gtts import gTTS
-import os
-import pygame
+from pyzbar import pyzbar
+import cv2
 
-replacement_dict = {
-    "XH": "Xã Hội",
-    "TN": "Tự Nhiên"
-}
-app = Flask(__name__)
+def test_pyzbar():
+    # Mở camera
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("Không thể mở camera.")
+        return
+    
+    print("Đang chờ QR code... (Nhấn 'q' để thoát)")
+    
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Không thể lấy khung hình từ camera.")
+            break
+        
+        # Giải mã QR code trong khung hình
+        decoded_objects = pyzbar.decode(frame)
+        
+        for obj in decoded_objects:
+            if obj.type == 'QRCODE':
+                data = obj.data.decode('utf-8')
+                print(f"Đã phát hiện QR code: {data}")
+        
+        # Hiển thị khung hình
+        cv2.imshow('Test Pyzbar - Press q to Quit', frame)
+        
+        # Thoát khi nhấn 'q'
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    
+    cap.release()
+    cv2.destroyAllWindows()
 
-pygame.mixer.init()
-
-# Function to play sound
-def play_sound(name, class_name):
-    announcement = f"Xin mời học sinh {name} lớp {class_name}, vui lòng ra cổng trường có phụ huynh đón."
-    tts = gTTS(text=announcement, lang='vi')
-    sound_file = f"{name}_{class_name}.mp3"
-    tts.save(sound_file)
-    pygame.mixer.music.load(sound_file)
-    pygame.mixer.music.play()
-    while pygame.mixer.music.get_busy():
-        pass
-    pygame.mixer.music.unload()
-    os.remove(sound_file)
-
-# Flask route to handle pickup registration (accepting POST requests)
-@app.route('/register_pickup', methods=['POST'])
-def register_pickup():
-    data = request.json
-    student_name = data.get('student_name')
-    class_name = data.get('class_name')
-
-    if not student_name or not class_name:
-        return jsonify({"error": "Missing student_name or class_name"}), 400
-
-    # Process the pick-up and play sound (asynchronously)
-    threading.Thread(target=play_sound, args=(student_name, class_name)).start()
-
-    return jsonify({'message': f'Pick-up registered for {student_name}, class {class_name}'}), 200
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    test_pyzbar()

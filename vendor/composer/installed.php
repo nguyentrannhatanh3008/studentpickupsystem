@@ -1,0 +1,41 @@
+<?php return array(
+    'root' => array(
+        'name' => 'nhata/khktproject',
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => 'f7c30249af47f44d9a2df481ea117f07e4df910e',
+        'type' => 'library',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'dev' => true,
+    ),
+    'versions' => array(
+        'nhata/khktproject' => array(
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => 'f7c30249af47f44d9a2df481ea117f07e4df910e',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'phpmailer/phpmailer' => array(
+            'pretty_version' => 'v6.9.2',
+            'version' => '6.9.2.0',
+            'reference' => 'a7b17b42fa4887c92146243f3d2f4ccb962af17c',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../phpmailer/phpmailer',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'twilio/sdk' => array(
+            'pretty_version' => '8.3.3',
+            'version' => '8.3.3.0',
+            'reference' => '5fae06f959653c426b040972b7a2f7679dbd5b8f',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../twilio/sdk',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+    ),
+);

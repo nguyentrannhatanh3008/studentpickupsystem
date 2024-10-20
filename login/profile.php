@@ -1,59 +1,114 @@
 <?php
 session_start();
 
+// Cấu hình kết nối cơ sở dữ liệu
 $servername = "localhost";
-$username = "postgres";
-$password = "!xNq!TRWY.AuD9U";
+$username_db = "postgres";
+$password_db = "!xNq!TRWY.AuD9U";
 $dbname = "studentpickup";
 
-// Connect to PostgreSQL database
-$conn = pg_connect("host=$servername dbname=$dbname user=$username password=$password");
+// Kết nối đến cơ sở dữ liệu PostgreSQL
+$conn = pg_connect("host=$servername dbname=$dbname user=$username_db password=$password_db");
 
+// Kiểm tra kết nối
 if (!$conn) {
     die("Connection failed: " . pg_last_error());
 }
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    header("Location: login.html");
+
+// Kiểm tra xem người dùng đã đăng nhập hay chưa
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true || !isset($_SESSION['userid'])) {
+    header("Location: login.php");
     exit();
 }
-// Check if the user is logged in
-$isLoggedIn = isset($_SESSION['userid']);
 
-if ($isLoggedIn) {
-    $userid = $_SESSION['userid'];
+// Lấy userid từ phiên
+$userid = $_SESSION['userid'];
 
-    // Fetch user information from the database
-    $query = "SELECT * FROM public.user WHERE id = $1";
-    $result = pg_query_params($conn, $query, array($userid));
+// Lấy thông tin người dùng từ cơ sở dữ liệu
+$query = "SELECT * FROM public.user WHERE id = $1";
+$result = pg_query_params($conn, $query, array($userid));
 
-    if ($result === false) {
-        echo "Error in query: " . pg_last_error($conn);
-    } else {
-        $user = pg_fetch_assoc($result);
-        if (!$user) {
-            $isLoggedIn = false; // If no user is found, set logged-in status to false
-        }
-    }
-    $unreadCount = 0;
-    $countQuery = "SELECT COUNT(*) AS unread FROM public.notifications WHERE user_id = $1 AND status = 'Chưa đọc'";
-    $countResult = pg_query_params($conn, $countQuery, array($userid));
-    
-    if ($countResult) {
-        $countRow = pg_fetch_assoc($countResult);
-        $unreadCount = intval($countRow['unread']);
-    } else {
-        // Xử lý lỗi truy vấn nếu cần
-        $unreadCount = 0;
-    }
+if ($result === false) {
+    // Nếu xảy ra lỗi trong truy vấn, ghi log và chuyển hướng
+    error_log("Lỗi truy vấn: " . pg_last_error($conn));
+    header("Location: login.php");
+    exit();
 }
+
+$user = pg_fetch_assoc($result);
+
+if (!$user) {
+    // Nếu không tìm thấy người dùng, chuyển hướng đến trang đăng nhập
+    header("Location: login.php");
+    exit();
+}
+
+// Map role codes to display names
+$role_map = [
+    'QuanLyNhaTruong' => 'Quản Lý Nhà Trường',
+    'PhuHuynh' => 'Phụ Huynh',
+    'GiaoVien' => 'Giáo Viên'
+];
+
+// Lấy tên vai trò hiển thị dựa trên mã vai trò từ cơ sở dữ liệu
+$role_display = isset($role_map[$user['role']]) ? $role_map[$user['role']] : 'Không xác định';
+
+// Fetch unread notifications count
+$unreadCount = 0;
+$countQuery = "SELECT COUNT(*) AS unread FROM public.notifications WHERE user_id = $1 AND status = 'Chưa đọc'";
+$countResult = pg_query_params($conn, $countQuery, array($userid));
+
+if ($countResult) {
+    $countRow = pg_fetch_assoc($countResult);
+    $unreadCount = intval($countRow['unread']);
+} else {
+    // Xử lý lỗi truy vấn nếu cần
+    $unreadCount = 0;
+}
+
+// Fetch the user's note
+$note = "";
+$noteQuery = "SELECT note FROM user_notes WHERE user_id = $1 LIMIT 1";
+$noteResult = pg_query_params($conn, $noteQuery, array($userid));
+
+if ($noteResult) {
+    $noteRow = pg_fetch_assoc($noteResult);
+    $note = $noteRow ? htmlspecialchars($noteRow['note']) : "";
+}
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $newNote = trim($_POST['note']);
+
+    // Update or insert the note
+    $existingNoteQuery = "SELECT * FROM user_notes WHERE user_id = $1";
+    $existingNoteResult = pg_query_params($conn, $existingNoteQuery, array($userid));
+
+    if ($existingNoteResult && pg_num_rows($existingNoteResult) > 0) {
+        // Update existing note
+        $updateNoteQuery = "UPDATE user_notes SET note = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2";
+        pg_query_params($conn, $updateNoteQuery, array($newNote, $userid));
+    } else {
+        // Insert new note
+        $insertNoteQuery = "INSERT INTO user_notes (user_id, note) VALUES ($1, $2)";
+        pg_query_params($conn, $insertNoteQuery, array($userid, $newNote));
+    }
+
+    // Reload the page to reflect the changes
+    header("Location: profile.php");
+    exit();
+}
+
+// Đóng kết nối sau khi xử lý
+pg_close($conn);
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi"> <!-- Đổi ngôn ngữ sang tiếng Việt -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
+    <title>Hồ Sơ Cá Nhân</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -64,133 +119,87 @@ if ($isLoggedIn) {
 <body>
 <header class="header">
     <h1></h1>
-        <nav class="navbar">
-            <ul class="nav">
-                <?php if ($user): ?>
-                    <li class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" aria-expanded="false" style="color: white;">
-                            <i class="fas fa-user-circle" style="font-size: 20px; margin-right: 10px; vertical-align: middle; color: white;"></i>
-                            <span class="username" style="font-size: 20px; font-weight: bold; margin-right: 5px; vertical-align: middle; color: white;">
-                                <?php echo htmlspecialchars($user['name']); ?>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                            <a class="dropdown-item" href="change_password.php"><i class="fa fa-key"></i> Đổi Mật Khẩu</a>
-                            <a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a>
-                        </div>
-                    </li>
-                <?php else: ?>
-                    <li class="nav-item">
-                        <a href="login.html" class="nav-link">Đăng Nhập</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="register.html" class="nav-link">Đăng Ký</a>
-                    </li>
-                <?php endif; ?>
-            </ul>
-        </nav>
-</header>
-    <div class="sidebar" id="sidebar">
-        <div class="top">
-            <i class="fas fa-bars" id ="btn"></i>
-        </div>
-        <ul class="nav-list">
-            <li><a href="index.php"><i class="fas fa-home"></i> <span class="nav-item">Trang Chủ</span></a></li>
-            <li>
-                <a href="notification.php" class="d-flex align-items-center">
-                    <i class="fas fa-bell"></i>
-                    <span class="nav-item ml-2">Thông Báo</span>
-                    <?php if ($unreadCount > 0): ?>
-                        <span class="badge badge-danger ml-auto"><?php echo $unreadCount; ?></span>
-                    <?php endif; ?>
+    <nav class="navbar">
+        <ul class="nav">
+            <li class="nav-item dropdown">
+                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" aria-expanded="false" style="color: white;">
+                    <i class="fas fa-user-circle" style="font-size: 20px; margin-right: 10px; vertical-align: middle; color: white;"></i>
+                    <span class="username" style="font-size: 20px; font-weight: bold; margin-right: 5px; vertical-align: middle; color: white;">
+                        <?php echo htmlspecialchars($user['name']); ?>
+                    </span>
                 </a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                    <a class="dropdown-item" href="change_password.php"><i class="fa fa-key"></i> Đổi Mật Khẩu</a>
+                    <a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a>
+                </div>
             </li>
-            <li><a href="profile.php"><i class="fas fa-user"></i> <span class="nav-item">Hồ Sơ</span></a></li>
-            <li><a href="studentlist.php"><i class="fas fa-child"></i> <span class="nav-item">Danh Sách Học Sinh</span></a></li>
         </ul>
+    </nav>
+</header>
+
+<div class="sidebar" id="sidebar">
+    <div class="top">
+        <i class="fas fa-bars" id ="btn"></i>
     </div>
+    <ul class="nav-list">
+        <li><a href="index.php"><i class="fas fa-home"></i> <span class="nav-item">Trang Chủ</span></a></li>
+        <li>
+            <a href="notification.php" class="d-flex align-items-center">
+                <i class="fas fa-bell"></i>
+                <span class="nav-item ml-2">Thông Báo</span>
+                <?php if ($unreadCount > 0): ?>
+                    <span class="badge badge-danger ml-auto"><?php echo $unreadCount; ?></span>
+                <?php endif; ?>
+            </a>
+        </li>
+        <li><a href="profile.php"><i class="fas fa-user"></i> <span class="nav-item">Hồ Sơ</span></a></li>
+        <li><a href="studentlist.php"><i class="fas fa-child"></i> <span class="nav-item">Danh Sách Học Sinh</span></a></li>
+    </ul>
+</div>
 
-    <div class="profile-container">
-        <?php if ($isLoggedIn): ?>
-            <h2>Thông Tin Người Dùng</h2>
-            <div class="profile-info">
-                <div class="info-item">
-                    <label>ID:</label>
-                    <span><?php echo htmlspecialchars($user['id']); ?></span>
-                </div>
-                <div class="info-item">
-                    <label>Username:</label>
-                    <span><?php echo htmlspecialchars($user['username']); ?></span>
-                </div>
-                <div class="info-item">
-                    <label>Name:</label>
-                    <span><?php echo !empty($user['name']) ? htmlspecialchars($user['name']) : 'None'; ?></span>
-                </div>
-                <div class="info-item">
-                    <label>Email:</label>
-                    <span><?php echo !empty($user['email']) ? htmlspecialchars($user['email']) : 'None'; ?></span>
-                </div>
-                <div class="info-item">
-                    <label>Phone Number:</label>
-                    <span><?php echo !empty($user['phone']) ? htmlspecialchars($user['phone']) : 'None'; ?></span>
-                </div>
-                <div class="info-item">
-                    <label>Gender:</label>
-                    <span><?php echo !empty($user['gender']) ? htmlspecialchars($user['gender']) : 'None'; ?></span>
-                </div>
-                <div class="info-item">
-                    <label>Date of Birth:</label>
-                    <span><?php echo !empty($user['date_of_birth']) ? htmlspecialchars($user['date_of_birth']) : 'None'; ?></span>
-                </div>
-            </div>
-        <?php else: ?>
-            <div class="login-message">
-                <p>Bạn cần đăng nhập hoặc đăng ký để có thông tin tài khoản.</p>
-            </div>
-
-            <!-- Login and Register buttons at the bottom -->
-            <div class="auth-buttons">
-                <a href="login.html" class="btn">Đăng Nhập</a>
-                <a href="register.html" class="btn">Đăng Ký</a>
-            </div>
-        <?php endif; ?>
+<div class="profile-container">
+    <div class="profile-header">
+        <h2>Thông Tin Cá Nhân</h2>
     </div>
+    <form method="POST">
+        <div class="profile-info">
+            <table class="table table-borderless">
+                <tr>
+                    <th>Mã tài khoản:</th>
+                    <td><?php echo htmlspecialchars($user['id']); ?></td>
+                    <th>Tên đăng nhập:</th>
+                    <td><?php echo htmlspecialchars($user['username']); ?></td>
+                </tr>
+                <tr>
+                    <th>Họ và tên:</th>
+                    <td><?php echo htmlspecialchars($user['name']); ?></td>
+                    <th>Giới tính:</th>
+                    <td><?php echo htmlspecialchars($user['gender']); ?></td>
+                </tr>
+                <tr>
+                    <th>Điện thoại:</th>
+                    <td><?php echo htmlspecialchars($user['phone']); ?></td>
+                    <th>Email:</th>
+                    <td><?php echo htmlspecialchars($user['email']); ?></td>
+                </tr>
+                <tr>
+                    <th>Vai Trò:</th>
+                    <td><?php echo htmlspecialchars($role_display); ?></td>
+                    <th></th>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>Ghi chú:</th>
+                    <td colspan="3">
+                        <textarea name="note" class="form-control" rows="3"><?php echo $note; ?></textarea>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <button type="submit" class="btn btn-primary update-btn">Cập nhật</button>
+    </form>
+</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const btn = document.querySelector("#btn");
-            const sidebar = document.querySelector(".sidebar");
-            const dropdownToggle = document.querySelector('.nav-link.dropdown-toggle');
-            const dropdownMenu = document.querySelector('.dropdown-menu');
-
-            // Sidebar toggle
-            if (btn) {
-                btn.addEventListener('click', function() {
-                    sidebar.classList.toggle("active");
-                });
-            }
-
-            // Dropdown toggle
-            if (dropdownToggle) {
-                dropdownToggle.addEventListener('click', function (event) {
-                    event.preventDefault();
-                    event.stopPropagation(); // Add this line to prevent event bubbling
-                    dropdownMenu.classList.toggle('show');
-                });
-            }
-
-
-            // Close dropdown when clicking outside
-            window.addEventListener('click', function(e) {
-                if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                    dropdownMenu.classList.remove('show');
-                }
-            });
-        });
-    </script>
+<script src="js/profile.js"></script>
 </body>
 </html>
-
-<?php
-// Close the database connection
-pg_close($conn);
-?>

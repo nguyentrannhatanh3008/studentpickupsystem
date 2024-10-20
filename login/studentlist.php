@@ -15,7 +15,7 @@ if (!$conn) {
 
 // Check if the user is logged in
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    header("Location: login.html");
+    header("Location: login.php");
     exit();
 }
 
@@ -97,10 +97,10 @@ if ($isLoggedIn && $user) {
                     </li>
                 <?php else: ?>
                     <li class="nav-item">
-                        <a href="login.html" class="nav-link">Đăng Nhập</a>
+                        <a href="login.php" class="nav-link">Đăng Nhập</a>
                     </li>
                     <li class="nav-item">
-                        <a href="register.html" class="nav-link">Đăng Ký</a>
+                        <a href="register.php" class="nav-link">Đăng Ký</a>
                     </li>
                 <?php endif; ?>
             </ul>
@@ -139,7 +139,9 @@ if ($isLoggedIn && $user) {
                 <?php if (!empty($students)): ?>
                     <?php $index = 1; ?>
                     <?php foreach ($students as $student): ?>
-                        <tr class="student-row" data-student-id="<?php echo htmlspecialchars($student['id']); ?>">
+                        <tr class="student-row" 
+                            data-student-id="<?php echo htmlspecialchars($student['id']); ?>"
+                            data-student-name="<?php echo htmlspecialchars($student['name']); ?>">
                             <td><?php echo $index++; ?></td>
                             <td><?php echo htmlspecialchars($student['name']); ?></td>
                             <td><?php echo htmlspecialchars($student['class']); ?></td>
@@ -158,24 +160,31 @@ if ($isLoggedIn && $user) {
 
     <!-- Student Details Modal -->
     <div class="modal fade" id="studentDetailsModal" tabindex="-1" aria-labelledby="studentDetailsModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+    <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">
-              <h5 class="modal-title" id="studentDetailsModalLabel">Thông tin Học sinh</h5>
-              <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-              </button>
-          </div>
-          <div class="modal-body">
+        <div class="modal-header">
+            <h5 class="modal-title" id="studentDetailsModalLabel">Thông tin Học sinh</h5>
+            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
             <p><strong>Tên:</strong> <span id="studentName"></span></p>
             <p><strong>Lớp:</strong> <span id="studentClass"></span></p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary btn-dong" data-dismiss="modal">Đóng</button>
-          </div>
+            <!-- Mã QR -->
+            <div class="qr-code-container text-center mt-3">
+                <p><strong>Mã QR:</strong></p>
+                <img id="studentQRCode" src="" alt="QR Code" />
+            </div>
         </div>
-      </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-dong" data-dismiss="modal">Đóng</button>
+        </div>
+        </div>
     </div>
+    </div>
+
+
 
     <!-- jQuery (Full Version) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

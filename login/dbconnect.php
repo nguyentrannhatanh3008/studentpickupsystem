@@ -1,20 +1,23 @@
 <?php
-$host = "localhost"; // Địa chỉ máy chủ PostgreSQL
-$port = "5432"; // Cổng PostgreSQL
-$dbname = "studentpickup"; // Tên cơ sở dữ liệu đã tạo trong pgAdmin
-$user = "postgres"; // Tên người dùng PostgreSQL
-$password = "!xNq!TRWY.AuD9U"; // Mật khẩu của người dùng PostgreSQL
+$db_host = "localhost";
+$db_port = "5432";
+$db_name = "your_database_name";
+$db_user = "postgres"; 
+$db_password = "your_password"; 
 
 // Tạo chuỗi kết nối
-$conn_string = "host=$host port=$port dbname=$dbname user=$user password=$password";
+$conn_string = "host=$db_host port=$db_port dbname=$db_name user=$db_user password=$db_password";
 
-// Kết nối tới cơ sở dữ liệu PostgreSQL
+// Kết nối tới PostgreSQL
 $conn = pg_connect($conn_string);
 
+// Kiểm tra kết nối
 if (!$conn) {
-    echo "Lỗi kết nối tới PostgreSQL.";
-} else {
-    echo "Kết nối tới PostgreSQL thành công!";
+    error_log("Không thể kết nối tới PostgreSQL với thông tin sau: $conn_string");
+    // Trả về phản hồi JSON lỗi
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'error', 'message' => 'Không thể kết nối cơ sở dữ liệu.']);
+    exit();
 }
 
 // Đóng kết nối (tùy chọn, nếu bạn muốn đóng sau khi hoàn tất)

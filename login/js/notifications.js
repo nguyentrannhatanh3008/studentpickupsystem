@@ -6,6 +6,7 @@ $(document).ready(function() {
     const bulkDeleteButton = $("#bulkDeleteButton");
     const headerTrash = $("#headerTrash");
     const selectAllCheckbox = $("#selectAll");
+
     bulkDeleteButton.html('<i class="fas fa-trash-alt"></i> Xóa');
 
     // Toggle sidebar on button click
@@ -28,16 +29,15 @@ $(document).ready(function() {
             dropdownMenu.removeClass('show');
         }
     });
-    
-    // Initialize DataTables for the Notifications Table
+
     console.log('Khởi tạo DataTables...');
     var table = $('#notificationsTable').DataTable({
-        "paging": true, // Hiển thị phân trang
-        "searching": true, // Hiển thị ô tìm kiếm
-        "ordering": true, // Cho phép sắp xếp
-        "info": true, // Hiển thị thông tin về trang hiện tại
-        "lengthMenu": [10, 25, 50, 100], // Các tùy chọn số mục trên mỗi trang
-        "pageLength": 10, // Số mục mặc định trên mỗi trang
+        "paging": true,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "lengthMenu": [10, 25, 50, 100],
+        "pageLength": 10,
         "language": {
             "lengthMenu": "Hiển thị _MENU_ mục trên mỗi trang",
             "zeroRecords": "Bạn không có thông báo nào.",
@@ -56,22 +56,25 @@ $(document).ready(function() {
         "autoWidth": false,
         "columnDefs": [
             {
-                "targets": 0, // Cột checkbox
+                "targets": 0,
                 "orderable": false,
                 "searchable": false,
-                "className": 'dt-body-center' // Căn giữa checkbox
+                "className": 'dt-body-center'
             },
             {
-                "targets": -1, // Cột hành động (xóa)
+                "targets": -1,
                 "orderable": false,
                 "searchable": false,
-                "className": 'dt-body-center' // Căn giữa nút xóa
+                "className": 'dt-body-center'
             },
             {
-                "targets": 5, // Cột thời gian gửi
+                "targets": 5,
                 "type": "datetime"
             }
         ],
+        "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+               "<'row'<'col-sm-12'tr>>" +
+               "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
         "initComplete": function(settings, json) {
             $('.dataTables_filter').addClass('datatable-search');
             $('.dataTables_paginate').addClass('datatable-pagination');
@@ -117,7 +120,7 @@ $(document).ready(function() {
     function deleteSelectedNotifications(selectedIds, selectedCount) {
         // Gửi yêu cầu AJAX để xóa các thông báo đã chọn
         $.ajax({
-            url: 'notification.php', // Đảm bảo rằng đường dẫn này đúng
+            url: 'notification_ajax.php', // URL tới notification_ajax.php
             method: 'POST',
             dataType: 'json',
             data: { delete_ids: selectedIds },
@@ -137,7 +140,6 @@ $(document).ready(function() {
 
                     alert('Xóa thành công ' + selectedCount + ' thông báo đã chọn.');
                     selectAllCheckbox.prop('checked', false);
-                    toggleDeleteSelectedBtn();
                 } else {
                     console.error('Error deleting notifications:', data.message);
                     alert('Không thể xóa những thông báo đã chọn.');
@@ -196,57 +198,57 @@ $(document).ready(function() {
         // Gọi hàm để xóa các thông báo đã chọn
         deleteSelectedNotifications(selectedIds, selectedCount);
     });
-    
+
     // Handle click event on notification rows using event delegation
     $('#notificationsTable tbody').on('click', 'tr.notification-row', function(e) {
         // Tránh mở modal khi click vào checkbox hoặc nút xóa
         if ($(e.target).is('input[type="checkbox"]') || $(e.target).closest('.delete-notification').length) {
             return;
         }
-    
+
         const $row = $(this);
         const notificationId = $row.data('notification-id');
-    
-        // Sửa dòng sau để đọc đúng cột Trạng thái và Thời gian gửi
+
+        // Đọc các cột dữ liệu
         const title = $row.find('td:nth-child(3)').text();
         const message = $row.find('td:nth-child(4)').text();
         const status = $row.find('td:nth-child(5)').text();
         const sentAt = $row.find('td:nth-child(6)').text();
-    
+
         // Populate the modal with notification details
         $('#modalNotificationTitle').text(title);
         $('#modalNotificationMessage').text(message);
         $('#modalNotificationTime').text(sentAt);
         $('#modalNotificationStatus').text(status);
-    
+
         // Enable or disable the "Đã Đọc" button based on status
         if (status.trim() === 'Chưa đọc') { 
             $('#markAsReadButton').prop('disabled', false).show();
         } else {
             $('#markAsReadButton').prop('disabled', true).hide();
         }
-    
+
         // Store the notification ID in the button's data attribute for later use
         $('#markAsReadButton').data('notification-id', notificationId);
-    
+
         // Show the modal
         $('#notificationDetailsModal').modal('show');
     });
-    
 
+    // Handle "Đã Đọc" button click
     $('#markAsReadButton').click(function() {
         const notificationId = $(this).data('notification-id');
         const $button = $(this);
 
         console.log('Notification ID:', notificationId);
-        console.log('AJAX URL:', 'notification.php');
+        console.log('AJAX URL:', 'notification_ajax.php');
 
         // Disable the button to prevent multiple clicks
         $button.prop('disabled', true);
 
         // Send AJAX request to update notification status
         $.ajax({
-            url: 'notification.php', // Ensure this path is correct
+            url: 'notification_ajax.php', // URL tới notification_ajax.php
             method: 'POST',
             dataType: 'json',
             data: { notification_id: notificationId },
@@ -265,9 +267,6 @@ $(document).ready(function() {
                     if (count > 0) {
                         $('#notificationCount').text(count - 1);
                     }
-
-                    // Update the modal status
-                    $('#modalNotificationStatusContent').text('Đã Đọc');
 
                     // Disable the "Đã Đọc" button as it's already read
                     $button.prop('disabled', true).hide();
@@ -305,7 +304,7 @@ $(document).ready(function() {
 
         // Send AJAX request to delete the notification
         $.ajax({
-            url: 'notification.php', // Đảm bảo rằng đường dẫn này đúng
+            url: 'notification_ajax.php', // URL tới notification_ajax.php
             method: 'POST',
             dataType: 'json',
             data: { delete_ids: [notificationId] }, // Gửi dưới dạng mảng
@@ -331,53 +330,57 @@ $(document).ready(function() {
             }
         });
     });
-    $(document).ready(function() {
-        // Khởi tạo DataTable nếu cần
-        $('#notificationsTable').DataTable();
-    
-        // Sự kiện khi nhấn vào biểu tượng "check-circle" để đánh dấu tất cả đã đọc
-        $('#markAllReadIcon').on('click', function() {
-            // Hiển thị modal xác nhận
-            $('#confirmMarkAllReadModal').modal('show');
-        });
-    
-        // Sự kiện khi nhấn nút "OK" trong modal xác nhận
-        $('#markAllReadConfirmBtn').on('click', function() {
-            // Gửi yêu cầu AJAX để đánh dấu tất cả đã đọc
-            $.ajax({
-                url: 'notification.php',
-                type: 'POST',
-                data: {
-                    action: 'mark_all_read'
-                },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.status === 'success') {
-                        // Cập nhật giao diện: thay đổi trạng thái và màu sắc icon
-                        $('.notification-row').each(function() {
-                            const statusCell = $(this).find('td').eq(4); // Cột trạng thái
-                            const icon = $(this).find('td').eq(1).find('i'); // Cột icon
-    
-                            if (statusCell.text().trim() === 'Chưa đọc') {
-                                statusCell.text('Đã Đọc');
-                                icon.removeClass('icon-gray').addClass('icon-orange');
-                            }
-                        });
-    
-                        // Đóng modal
-                        $('#confirmMarkAllReadModal').modal('hide');
-    
-                        alert('Tất cả thông báo đã được đánh dấu là đã đọc.');
-                    } else {
-                        alert('Lỗi: ' + response.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Lỗi AJAX:', error);
-                    alert('Đã xảy ra lỗi khi đánh dấu tất cả đã đọc.');
+
+    // Handle mark all as read
+    $('#markAllReadIcon').on('click', function() {
+        // Hiển thị modal xác nhận
+        $('#confirmMarkAllReadModal').modal('show');
+    });
+
+    // Handle confirmation of marking all as read
+    $('#markAllReadConfirmBtn').on('click', function() {
+        // Gửi yêu cầu AJAX để đánh dấu tất cả đã đọc
+        $.ajax({
+            url: 'notification_ajax.php',
+            type: 'POST',
+            data: {
+                action: 'mark_all_read'
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Cập nhật giao diện: thay đổi trạng thái và màu sắc icon
+                    $('.notification-row').each(function() {
+                        const statusCell = $(this).find('td').eq(4); // Cột trạng thái
+                        const icon = $(this).find('td').eq(1).find('i'); // Cột icon
+
+                        if (statusCell.text().trim() === 'Chưa đọc') {
+                            statusCell.text('Đã Đọc');
+                            icon.removeClass('icon-gray').addClass('icon-orange');
+                        }
+                    });
+
+                    // Cập nhật số lượng thông báo
+                    let count = parseInt($('#notificationCount').text());
+                    $('#notificationCount').text(0);
+
+                    // Đóng modal
+                    $('#confirmMarkAllReadModal').modal('hide');
+
+                    alert('Tất cả thông báo đã được đánh dấu là đã đọc.');
+                } else {
+                    alert('Lỗi: ' + response.message);
                 }
-            });
+            },
+            error: function(xhr, status, error) {
+                console.error('Lỗi AJAX:', error);
+                alert('Đã xảy ra lỗi khi đánh dấu tất cả đã đọc.');
+            }
         });
     });
-    
+
+    // Optional: Reload the page every 10 seconds to fetch new notifications
+    setInterval(function(){
+        location.reload();
+    }, 10000);
 });
