@@ -1,0 +1,6 @@
+2024-11-03 12:42:40,843 - INFO - Database connection established.
+2024-11-03 12:42:40,847 - INFO - Fetched 777 students needing birthdate updates.
+2024-11-03 12:42:40,847 - INFO - Successfully read 777 birthdates from file.
+2024-11-03 12:42:40,847 - INFO - First 5 birthdates: ['29/03/2018', '18/04/2018', '26/12/2013', '24/02/2017', '12/05/2016']
+2024-11-03 12:42:40,848 - ERROR - Error during update: set_session cannot be used inside a transaction
+2024-11-03 12:42:40,848 - INFO - Database connection closed.

@@ -51,6 +51,15 @@ if ($isLoggedIn) {
             // Cập nhật role trong session
             $_SESSION['role'] = $user['role'];
             $role = $user['role'];
+
+            // Ghi log để kiểm tra vai trò (bạn có thể loại bỏ sau khi kiểm tra)
+            error_log("User ID: $userid, Role: '$role'");
+
+            // Kiểm tra vai trò và chuyển hướng nếu không phải PhuHuynh
+            if (strcasecmp(trim($role), 'PhuHuynh') !== 0) {
+                header("Location: index_teacher.php");
+                exit();
+            }
         }
     }
 
@@ -79,6 +88,7 @@ if (!$isLoggedIn) {
         exit();
     }
 }
+
 
 
 // Hàm để gửi yêu cầu "Replay" đến Flask server
@@ -153,18 +163,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($studentResult) {
                         $student = pg_fetch_assoc($studentResult);
 
-                        // Chèn thông báo vào bảng notifications
-                        $notificationTitle = "Yêu cầu đón";
-                        $notificationMessage = "Yêu cầu đón cho học sinh " . $student['name'] . " lúc " . $created_at;
-                        $notificationStatus = "Chưa đọc";
-                        $notificationQuery = "INSERT INTO public.notifications (user_id, title, message, status, created_at) VALUES ($1, $2, $3, $4, NOW())";
-                        $notificationResult = pg_query_params($conn, $notificationQuery, array($userid, $notificationTitle, $notificationMessage, $notificationStatus));
+                        // Lấy FPN và MPN của học sinh
+                        $FPN = $student['fpn'];
+                        $MPN = $student['mpn'];
 
-                        if (!$notificationResult) {
-                            header('Content-Type: application/json');
-                            ob_clean();
-                            echo json_encode(['status' => 'error', 'message' => 'Không thể chèn thông báo: ' . pg_last_error()]);
-                            exit();
+                        // Mảng lưu trữ user_ids để gửi thông báo
+                        $user_ids = [];
+
+                        // Kiểm tra FPN
+                        if (!empty($FPN)) {
+                            $userQuery = "SELECT id FROM public.user WHERE phone = $1";
+                            $userResult = pg_query_params($conn, $userQuery, array($FPN));
+                            if ($userResult && pg_num_rows($userResult) > 0) {
+                                while ($user = pg_fetch_assoc($userResult)) {
+                                    $user_ids[] = $user['id'];
+                                }
+                            }
+                        }
+
+                        // Kiểm tra MPN
+                        if (!empty($MPN)) {
+                            $userQuery = "SELECT id FROM public.user WHERE phone = $1";
+                            $userResult = pg_query_params($conn, $userQuery, array($MPN));
+                            if ($userResult && pg_num_rows($userResult) > 0) {
+                                while ($user = pg_fetch_assoc($userResult)) {
+                                    if (!in_array($user['id'], $user_ids)) {
+                                        $user_ids[] = $user['id'];
+                                    }
+                                }
+                            }
+                        }
+
+                        // Gửi thông báo cho các user_ids
+                        foreach ($user_ids as $notify_user_id) {
+                            $notificationTitle = "Yêu cầu đón";
+                            $notificationMessage = "Yêu cầu đón cho học sinh " . $student['name'] . " lúc " . $created_at;
+                            $notificationStatus = "Chưa đọc";
+                            $notificationQuery = "INSERT INTO public.notifications (user_id, title, message, status, created_at) VALUES ($1, $2, $3, $4, NOW())";
+                            $notificationResult = pg_query_params($conn, $notificationQuery, array($notify_user_id, $notificationTitle, $notificationMessage, $notificationStatus));
+
+                            if (!$notificationResult) {
+                                header('Content-Type: application/json');
+                                ob_clean();
+                                echo json_encode(['status' => 'error', 'message' => 'Không thể chèn thông báo: ' . pg_last_error()]);
+                                exit();
+                            }
                         }
 
                         $responseArray[] = [
@@ -220,27 +263,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pickupTime = date('Y-m-d H:i:s', strtotime($row['pickup_time']));
 
                 // Lấy thông tin học sinh
-                $studentQuery = "SELECT name FROM public.student WHERE id = $1";
+                $studentQuery = "SELECT * FROM public.student WHERE id = $1";
                 $studentResult = pg_query_params($conn, $studentQuery, array($studentId));
 
                 if ($studentResult) {
-                    $studentRow = pg_fetch_assoc($studentResult);
-                    $studentName = $studentRow['name'];
+                    $student = pg_fetch_assoc($studentResult);
 
-                    // Chuẩn bị nội dung thông báo
-                    $notificationTitle = "Đã Được Xác Nhận";
-                    $notificationMessage = "Yêu cầu đón cho học sinh " . $studentName . " lúc " . $pickupTime . " đã được xác nhận.";
-                    $notificationStatus = "Chưa đọc";
+                    // Lấy FPN và MPN của học sinh
+                    $FPN = $student['fpn'];
+                    $MPN = $student['mpn'];
 
-                    // Chèn thông báo vào bảng notifications
-                    $notificationQuery = "INSERT INTO public.notifications (user_id, title, message, status, created_at) VALUES ($1, $2, $3, $4, NOW())";
-                    $notificationResult = pg_query_params($conn, $notificationQuery, array($userid, $notificationTitle, $notificationMessage, $notificationStatus));
+                    // Mảng lưu trữ user_ids để gửi thông báo
+                    $user_ids = [];
 
-                    if (!$notificationResult) {
-                        header('Content-Type: application/json');
-                        ob_clean();
-                        echo json_encode(['status' => 'error', 'message' => 'Không thể chèn thông báo: ' . pg_last_error()]);
-                        exit();
+                    // Kiểm tra FPN
+                    if (!empty($FPN)) {
+                        $userQuery = "SELECT id FROM public.user WHERE phone = $1";
+                        $userResult = pg_query_params($conn, $userQuery, array($FPN));
+                        if ($userResult && pg_num_rows($userResult) > 0) {
+                            while ($user = pg_fetch_assoc($userResult)) {
+                                $user_ids[] = $user['id'];
+                            }
+                        }
+                    }
+
+                    // Kiểm tra MPN
+                    if (!empty($MPN)) {
+                        $userQuery = "SELECT id FROM public.user WHERE phone = $1";
+                        $userResult = pg_query_params($conn, $userQuery, array($MPN));
+                        if ($userResult && pg_num_rows($userResult) > 0) {
+                            while ($user = pg_fetch_assoc($userResult)) {
+                                if (!in_array($user['id'], $user_ids)) {
+                                    $user_ids[] = $user['id'];
+                                }
+                            }
+                        }
+                    }
+
+                    // Gửi thông báo cho các user_ids
+                    foreach ($user_ids as $notify_user_id) {
+                        $notificationTitle = "Đã Được Xác Nhận";
+                        $notificationMessage = "Yêu cầu đón cho học sinh " . $student['name'] . " lúc " . $pickupTime . " đã được xác nhận.";
+                        $notificationStatus = "Chưa đọc";
+                        $notificationQuery = "INSERT INTO public.notifications (user_id, title, message, status, created_at) VALUES ($1, $2, $3, $4, NOW())";
+                        $notificationResult = pg_query_params($conn, $notificationQuery, array($notify_user_id, $notificationTitle, $notificationMessage, $notificationStatus));
+
+                        if (!$notificationResult) {
+                            header('Content-Type: application/json');
+                            ob_clean();
+                            echo json_encode(['status' => 'error', 'message' => 'Không thể chèn thông báo: ' . pg_last_error()]);
+                            exit();
+                        }
                     }
 
                     header('Content-Type: application/json');
@@ -269,27 +342,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $studentId = $row['student_id'];
 
                 // Lấy thông tin học sinh
-                $studentQuery = "SELECT name FROM public.student WHERE id = $1";
+                $studentQuery = "SELECT * FROM public.student WHERE id = $1";
                 $studentResult = pg_query_params($conn, $studentQuery, array($studentId));
 
                 if ($studentResult) {
-                    $studentRow = pg_fetch_assoc($studentResult);
-                    $studentName = $studentRow['name'];
+                    $student = pg_fetch_assoc($studentResult);
 
-                    // Chuẩn bị nội dung thông báo
-                    $notificationTitle = "Đã hủy đón";
-                    $notificationMessage = "Yêu cầu đón cho học sinh " . $studentName . " đã bị hủy.";
-                    $notificationStatus = "Chưa đọc";
+                    // Lấy FPN và MPN của học sinh
+                    $FPN = $student['fpn'];
+                    $MPN = $student['mpn'];
 
-                    // Chèn thông báo vào bảng notifications
-                    $notificationQuery = "INSERT INTO public.notifications (user_id, title, message, status, created_at) VALUES ($1, $2, $3, $4, NOW())";
-                    $notificationResult = pg_query_params($conn, $notificationQuery, array($userid, $notificationTitle, $notificationMessage, $notificationStatus));
+                    // Mảng lưu trữ user_ids để gửi thông báo
+                    $user_ids = [];
 
-                    if (!$notificationResult) {
-                        header('Content-Type: application/json');
-                        ob_clean();
-                        echo json_encode(['status' => 'error', 'message' => 'Không thể chèn thông báo: ' . pg_last_error()]);
-                        exit();
+                    // Kiểm tra FPN
+                    if (!empty($FPN)) {
+                        $userQuery = "SELECT id FROM public.user WHERE phone = $1";
+                        $userResult = pg_query_params($conn, $userQuery, array($FPN));
+                        if ($userResult && pg_num_rows($userResult) > 0) {
+                            while ($user = pg_fetch_assoc($userResult)) {
+                                $user_ids[] = $user['id'];
+                            }
+                        }
+                    }
+
+                    // Kiểm tra MPN
+                    if (!empty($MPN)) {
+                        $userQuery = "SELECT id FROM public.user WHERE phone = $1";
+                        $userResult = pg_query_params($conn, $userQuery, array($MPN));
+                        if ($userResult && pg_num_rows($userResult) > 0) {
+                            while ($user = pg_fetch_assoc($userResult)) {
+                                if (!in_array($user['id'], $user_ids)) {
+                                    $user_ids[] = $user['id'];
+                                }
+                            }
+                        }
+                    }
+
+                    // Gửi thông báo cho các user_ids
+                    foreach ($user_ids as $notify_user_id) {
+                        $notificationTitle = "Đã hủy đón";
+                        $notificationMessage = "Yêu cầu đón cho học sinh " . $student['name'] . " đã bị hủy.";
+                        $notificationStatus = "Chưa đọc";
+                        $notificationQuery = "INSERT INTO public.notifications (user_id, title, message, status, created_at) VALUES ($1, $2, $3, $4, NOW())";
+                        $notificationResult = pg_query_params($conn, $notificationQuery, array($notify_user_id, $notificationTitle, $notificationMessage, $notificationStatus));
+
+                        if (!$notificationResult) {
+                            header('Content-Type: application/json');
+                            ob_clean();
+                            echo json_encode(['status' => 'error', 'message' => 'Không thể chèn thông báo: ' . pg_last_error()]);
+                            exit();
+                        }
                     }
 
                     header('Content-Type: application/json');
@@ -466,7 +569,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Nếu script đến đây, tức là yêu cầu POST không hợp lệ
     header('Content-Type: application/json');
     ob_clean();
     echo json_encode(['status' => 'error', 'message' => 'Yêu cầu POST không hợp lệ.']);
@@ -658,11 +760,25 @@ if (ob_get_length()) {
                 <p><strong>Lớp:</strong> <?php echo htmlspecialchars($pickup['class']); ?></p>
                 <p><strong>Thời gian:</strong> <?php echo htmlspecialchars($pickup['created_at']); ?></p>
                 <p><strong>Trạng thái:</strong> <span id="dialog_status_<?php echo htmlspecialchars($pickup['pickup_id']); ?>" style="color: orange;">Chờ xử lý</span></p>
-                <button type="button" data-pickup-id="<?php echo htmlspecialchars($pickup['pickup_id']); ?>" data-student-id="<?php echo htmlspecialchars($pickup['student_id']); ?>" class="confirm-btn btn btn-success">Xác nhận</button>
-                <button type="button" data-pickup-id="<?php echo htmlspecialchars($pickup['pickup_id']); ?>" data-student-id="<?php echo htmlspecialchars($pickup['student_id']); ?>" class="cancel-btn btn btn-warning">Hủy</button>
-                <button type="button" data-pickup-id="<?php echo htmlspecialchars($pickup['pickup_id']); ?>" data-student-id="<?php echo htmlspecialchars($pickup['student_id']); ?>" class="replay-btn btn btn-info">Phát lại</button>
+                <button type="button" 
+                        data-pickup-id="<?php echo htmlspecialchars($pickup['pickup_id']); ?>" 
+                        data-student-id="<?php echo htmlspecialchars($pickup['student_id']); ?>" 
+                        data-student-name="<?php echo htmlspecialchars($pickup['student_name']); ?>" 
+                        data-student-class="<?php echo htmlspecialchars($pickup['class']); ?>" 
+                        class="confirm-btn btn btn-success">Xác nhận</button>
+                <button type="button" 
+                        data-pickup-id="<?php echo htmlspecialchars($pickup['pickup_id']); ?>" 
+                        data-student-id="<?php echo htmlspecialchars($pickup['student_id']); ?>" 
+                        class="cancel-btn btn btn-warning">Hủy</button>
+                <button type="button" 
+                        data-pickup-id="<?php echo htmlspecialchars($pickup['pickup_id']); ?>" 
+                        data-student-id="<?php echo htmlspecialchars($pickup['student_id']); ?>" 
+                        data-student-name="<?php echo htmlspecialchars($pickup['student_name']); ?>" 
+                        data-student-class="<?php echo htmlspecialchars($pickup['class']); ?>" 
+                        class="replay-btn btn btn-info">Phát lại</button>
             </div>
         <?php endforeach; ?>
+
         </div>
 
     </div>

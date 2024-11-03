@@ -188,7 +188,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ids']) && is_a
     exit();
 }
 
+// Xử lý yêu cầu AJAX kiểm tra thông báo mới
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'check_new_notifications') {
+    $lastCheckTime = isset($_POST['last_check_time']) ? $_POST['last_check_time'] : null;
 
+    if ($lastCheckTime) {
+        // Lấy các thông báo mới hơn thời gian cuối cùng kiểm tra
+        $notificationQuery = "SELECT id, title, message, status, date_trunc('second', created_at) AS created_at
+                              FROM public.notifications
+                              WHERE user_id = $1 AND created_at > $2
+                              ORDER BY created_at DESC";
+        $notificationResult = pg_query_params($conn, $notificationQuery, array($userid, $lastCheckTime));
+    } else {
+        // Lấy tất cả thông báo chưa đọc
+        $notificationQuery = "SELECT id, title, message, status, date_trunc('second', created_at) AS created_at
+                              FROM public.notifications
+                              WHERE user_id = $1 AND status = 'Chưa đọc'
+                              ORDER BY created_at DESC";
+        $notificationResult = pg_query_params($conn, $notificationQuery, array($userid));
+    }
+
+    $newNotifications = [];
+
+    if ($notificationResult && pg_num_rows($notificationResult) > 0) {
+        while ($notification = pg_fetch_assoc($notificationResult)) {
+            $newNotifications[] = $notification;
+        }
+    }
+
+    // Cập nhật số lượng thông báo chưa đọc
+    $countQuery = "SELECT COUNT(*) AS unread FROM public.notifications WHERE user_id = $1 AND status = 'Chưa đọc'";
+    $countResult = pg_query_params($conn, $countQuery, array($userid));
+    if ($countResult) {
+        $countRow = pg_fetch_assoc($countResult);
+        $unreadCount = intval($countRow['unread']);
+    } else {
+        $unreadCount = 0;
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode([
+        'status' => 'success',
+        'notifications' => $newNotifications,
+        'unread_count' => $unreadCount
+    ]);
+    pg_close($conn);
+    exit();
+}
 // Tiếp tục với việc hiển thị trang
 
 $notificationQuery = "SELECT id, title, message, status, date_trunc('second', created_at) AS created_at

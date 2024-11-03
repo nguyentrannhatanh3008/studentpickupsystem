@@ -1,3 +1,5 @@
+// index.js
+
 // Global error handling to catch unexpected errors and reload the page
 window.onerror = function(message, source, lineno, colno, error) {
     console.error(`Global Error: ${message} at ${source}:${lineno}:${colno}`);
@@ -161,54 +163,89 @@ $(document).ready(function () {
     // Initialize DataTables with rowId option
     $.fn.dataTable.ext.errMode = 'none'; // Suppress DataTables error alerts
     table = $('#pickupHistoryTable').DataTable({
-        "paging": true,
-        "searching": true,
-        "ordering": true,
-        "info": true,
-        "lengthMenu": [5, 10, 25, 50],
-        "pageLength": 10,
-        "language": {
-            "lengthMenu": "Hiển thị _MENU_ mục trên mỗi trang",
-            "zeroRecords": "Không tìm thấy kết quả nào.",
-            "info": "Hiển thị trang _PAGE_ trong tổng số _PAGES_",
-            "infoEmpty": "Không có mục nào được hiển thị",
-            "infoFiltered": "(lọc từ _MAX_ mục)",
-            "emptyTable": "Không tìm thấy lịch sử.", // Let DataTables handle the empty message
-            "search": "Tìm kiếm:",
-            "paginate": {
-                "first": "Đầu",
-                "last": "Cuối",
-                "next": "Tiếp",
-                "previous": "Trước"
+        data: [], // Empty data initially
+        paging: true,
+        searching: true,
+        ordering: true,
+        info: true,
+        lengthMenu: [5, 10, 25, 50],
+        pageLength: 10,
+        language: {
+            lengthMenu: "Hiển thị _MENU_ mục trên mỗi trang",
+            zeroRecords: "Không tìm thấy kết quả nào.",
+            info: "Hiển thị trang _PAGE_ trong tổng số _PAGES_",
+            infoEmpty: "Không có mục nào được hiển thị",
+            infoFiltered: "(lọc từ _MAX_ mục)",
+            emptyTable: "Không tìm thấy lịch sử.",
+            search: "Tìm kiếm:",
+            paginate: {
+                first: "Đầu",
+                last: "Cuối",
+                next: "Tiếp",
+                previous: "Trước"
             }
         },
-        "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-               '<"row"<"col-sm-12"tr>>' +
-               '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-        "responsive": true,
-        "autoWidth": false,
-        "rowId": 'pickup_id', // Set rowId to ensure uniqueness
-        "columnDefs": [
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        responsive: true,
+        autoWidth: false,
+        rowId: 'pickup_id', // Set rowId to ensure uniqueness
+        columns: [
             {
-                "targets": 0, // Checkbox column
-                "orderable": false,
-                "searchable": false,
-                "className": 'dt-body-center'
+                data: null,
+                orderable: false,
+                searchable: false,
+                className: 'dt-body-center',
+                render: function (data, type, row) {
+                    // Checkbox column
+                    const canDelete = canDeletePickup(data);
+                    return canDelete ? `<input type='checkbox' class='row-checkbox' data-pickup-id='${data.pickup_id}'>` : '';
+                }
+            },
+            { data: 'student_name', className: 'student-name' },
+            { data: 'class', className: 'student-class' },
+            { data: 'created_at', type: 'datetime', render: function(data, type, row) {
+                return formatTime(data);
+            }},
+            { data: 'status', render: function(data, type, row) {
+                return `<span id='status_${row.pickup_id}'>${data}</span>`;
+            }},
+            {
+                data: null,
+                orderable: false,
+                searchable: false,
+                render: function (data, type, row) {
+                    // Countdown column
+                    const expirationTime = getExpirationTime(data.created_at);
+                    const isExpired = isPickupExpired(expirationTime);
+                    return `<span id='countdown_${data.pickup_id}' data-expiration='${expirationTime.toISOString()}'>${isExpired ? 'Đã hết hạn' : 'Đang đếm ngược...'}</span>`;
+                }
             },
             {
-                "targets": -1, // Action column
-                "orderable": false,
-                "searchable": false,
-                "className": 'dt-body-center'
-            },
-            {
-                "targets": 5, // Countdown column
-                "orderable": false,
-                "searchable": false
-            },
-            {
-                "targets": 3, // Pickup Time column
-                "type": "datetime"
+                data: null,
+                orderable: false,
+                searchable: false,
+                className: 'dt-body-center',
+                render: function (data, type, row) {
+                    // Actions column
+                    const canDelete = canDeletePickup(data);
+                    const isPending = data.status.toLowerCase() === 'chờ xử lý';
+                    let actions = '';
+                    if (canDelete) {
+                        actions += `<button class='btn btn-sm btn-danger delete-btn' data-pickup-id='${data.pickup_id}'><i class='fas fa-trash-alt'></i> Xóa</button>`;
+                    }
+                    if (isPending) {
+                        const replayCooldownRemaining = getReplayCooldownRemaining(data);
+                        if (replayCooldownRemaining > 0) {
+                            const cooldownText = formatCooldown(replayCooldownRemaining);
+                            actions += `<button class='btn btn-sm btn-info replay-btn' data-pickup-id='${data.pickup_id}' data-student-id='${data.student_id}' data-deadline='${Math.floor(Date.now() / 1000) + replayCooldownRemaining}' disabled>Phát lại (${cooldownText})</button>`;
+                        } else {
+                            actions += `<button class='btn btn-sm btn-info replay-btn' data-pickup-id='${data.pickup_id}' data-student-id='${data.student_id}'><i class='fas fa-redo'></i> Phát lại</button>`;
+                        }
+                    }
+                    return actions;
+                }
             }
         ]
     });
@@ -227,65 +264,27 @@ $(document).ready(function () {
             return; // Early exit if data is missing or malformed
         }
 
-        // DataTables will handle row uniqueness based on 'rowId'
-        // Prepare data for the row
-        // Calculate expiration time (24 hours from created_at)
-        const expirationTime = new Date(Date.parse(data.created_at) + 24 * 60 * 60 * 1000);
-
-        // Check if countdown is over
-        const timeRemaining = getTimeRemaining(expirationTime);
-        const canDelete = timeRemaining.total <= 0;
-
-        // Delete button and checkbox only show if canDelete is true
-        const deleteButtonHtml = canDelete ? `<button class='btn btn-sm btn-danger delete-btn' data-pickup-id='${data.pickup_id}'><i class='fas fa-trash-alt'></i> Xóa</button>` : '';
-        const checkboxHtml = canDelete ? `<input type='checkbox' class='row-checkbox' data-pickup-id='${data.pickup_id}'>` : '';
-
-        // Replay button based on status
-        let replayBtnHtml = '';
-        if (data.status.toLowerCase() === 'chờ xử lý') {
-            // Check replay cooldown
-            const currentTime = Math.floor(Date.now() / 1000);
-            const lastReplayTime = data.last_replay_time ? Math.floor(Date.parse(data.last_replay_time) / 1000) : 0;
-            const replayCooldownRemaining = currentTime - lastReplayTime;
-            const cooldownPeriod = 3 * 60; // 3 minutes in seconds
-
-            if (replayCooldownRemaining < cooldownPeriod) {
-                const remaining = cooldownPeriod - replayCooldownRemaining;
-                replayBtnHtml = `<button class='btn btn-sm btn-info replay-btn' data-pickup-id='${data.pickup_id}' data-student-id='${data.student_id}' data-deadline='${currentTime + remaining}' disabled>Phát lại (${formatCooldown(remaining)})</button>`;
-            } else {
-                // "Replay" button enabled
-                replayBtnHtml = `<button class='btn btn-sm btn-info replay-btn' data-pickup-id='${data.pickup_id}' data-student-id='${data.student_id}'><i class="fas fa-redo"></i> Phát lại</button>`;
-            }
+        // Check if the row already exists
+        const existingRow = table.row(`#${data.pickup_id}`);
+        if (existingRow.node()) {
+            // Update the existing row
+            existingRow.data(data).draw(false);
+        } else {
+            // Add new row
+            table.row.add(data).draw(false);
         }
 
-        // Build row data (7 columns)
-        var rowData = [
-            checkboxHtml,
-            `<span class='student-name' data-student-name='${data.student_name}'>${data.student_name}</span>`,
-            `<span class='student-class' data-student-class='${data.class}'>${data.class}</span>`,
-            formatTime(data.created_at),
-            `<span id='status_${data.pickup_id}'>${data.status}</span>`,
-            `<span id='countdown_${data.pickup_id}' data-expiration='${expirationTime.toISOString()}'>${canDelete ? 'Đã hết hạn' : 'Đang đếm ngược...'}</span>`,
-            deleteButtonHtml + ' ' + replayBtnHtml
-        ];
-
-        try {
-            // Add row to DataTable
-            table.row.add(rowData).draw(false);
-
-            // If countdown is not over, start countdown
-            if (!canDelete) {
-                const countdownElement = $(`#countdown_${data.pickup_id}`);
-                initializeCountdown(countdownElement, expirationTime, data.pickup_id);
-            }
-        } catch (error) {
-            console.error('Error adding row to DataTable:', error);
-            throw error; // Re-throw to be caught by the global error handler
+        // Initialize countdown if not expired
+        const expirationTime = getExpirationTime(data.created_at);
+        if (!isPickupExpired(expirationTime)) {
+            const countdownElement = $(`#countdown_${data.pickup_id}`);
+            initializeCountdown(countdownElement, expirationTime, data.pickup_id);
         }
     }
 
     // Function to format timestamp as 'YYYY-MM-DD HH:mm:ss'
     function formatTime(timeStr) {
+        // Remove microseconds if present
         const timeWithoutMicroseconds = timeStr.split('.')[0];
         const date = new Date(timeWithoutMicroseconds);
 
@@ -301,7 +300,34 @@ $(document).ready(function () {
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     }
 
-    // Function to create a new dialog box for pending pickups
+    // Helper functions
+    function canDeletePickup(data) {
+        const expirationTime = getExpirationTime(data.created_at);
+        return isPickupExpired(expirationTime) && data.status.toLowerCase() !== 'chờ xử lý';
+    }
+
+    function getExpirationTime(createdAt) {
+        return new Date(Date.parse(createdAt) + 24 * 60 * 60 * 1000);
+    }
+
+    function isPickupExpired(expirationTime) {
+        return new Date() >= expirationTime;
+    }
+
+    function getReplayCooldownRemaining(data) {
+        const cooldownPeriod = 3 * 60; // 3 minutes in seconds
+        const currentTime = Math.floor(Date.now() / 1000);
+        const lastReplayTime = data.last_replay_time ? Math.floor(Date.parse(data.last_replay_time) / 1000) : 0;
+        const timeSinceLastReplay = currentTime - lastReplayTime;
+        return timeSinceLastReplay < cooldownPeriod ? cooldownPeriod - timeSinceLastReplay : 0;
+    }
+
+    function formatCooldown(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+    }
+
     function createDialog(name, studentClass, time, pickupId, studentId) {
         // Avoid creating duplicate dialogs
         if (displayedDialogs.has(pickupId)) {
@@ -467,7 +493,6 @@ $(document).ready(function () {
         });
     }
 
-    // Function to replay a pickup from the history table
     $(document).on('click', '.replay-btn', function(event) {
         event.preventDefault();
         const button = $(this);
@@ -476,76 +501,7 @@ $(document).ready(function () {
         replayPickup(pickupId, button);
     });
 
-    // Function to replay a pickup
-    function replayPickup(pickupId, button) {
-        console.log(`Replaying pickup ID: ${pickupId}`); // Debug log
-
-        const row = table.row(`#${pickupId}`);
-        if (!row.length) {
-            alert('Không tìm thấy pickup.');
-            return;
-        }
-
-        const rowData = row.data();
-        const studentNameMatch = rowData[1].match(/data-student-name='([^']+)'/);
-        const studentName = studentNameMatch ? studentNameMatch[1] : 'Unknown';
-        const studentId = button.data('student-id'); // Get student-id from button's data attribute
-
-        console.log('Student Name:', studentName);
-        console.log('Student ID:', studentId);
-
-        // Proceed only if studentId is defined
-        if (!studentId) {
-            console.error('Student ID is undefined.');
-            alert('Không thể lấy thông tin học sinh. Vui lòng thử lại.');
-            return;
-        }
-
-        // Send replay request via AJAX to PHP
-        fetch('index.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `action=replay&pickup_id=${encodeURIComponent(pickupId)}&student_id=${encodeURIComponent(studentId)}&student_name=${encodeURIComponent(studentName)}`
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return response.json();
-            } else {
-                return response.text().then(text => { throw new Error('Server did not return JSON: ' + text); });
-            }
-        })
-        .then(data => {
-            console.log('Phản hồi:', data); // Log response
-
-            if (data.status === 'success') {
-                // Update UI accordingly
-                button.prop('disabled', true);
-                button.text('Phát lại (3:00)');
-                initializeReplayCountdown(button, data.deadline, data.server_time);
-            } else if (data.status === 'cooldown') {
-                // Server indicates cooldown
-                alert(data.message);
-                button.prop('disabled', true);
-                const remainingCooldown = data.deadline - data.server_time;
-                button.text(`Phát lại (${formatCooldown(remainingCooldown)})`);
-                initializeReplayCountdown(button, data.deadline, data.server_time);
-            } else {
-                alert(`Lỗi: ${data.message}`);
-            }
-        })
-        .catch(error => {
-            console.error('Lỗi:', error);
-            alert(`Đã xảy ra lỗi với yêu cầu: ${error.message}`);
-        });
-    }
-
-    // Function to replay a pickup from a dialog box
+    
     function replayPickupInDialog(pickupId, button) {
         console.log(`Replaying pickup ID: ${pickupId}`); // Debug log
 
@@ -594,37 +550,31 @@ $(document).ready(function () {
         .then(data => {
             console.log('Phản hồi:', data);
 
-            if (data.status === 'success') {
-                // Server provides 'deadline' as Unix timestamp (seconds since epoch)
-                const deadline = data.deadline; // e.g., 1700000000
-                const serverTime = data.server_time; // e.g., 1699990000
-                const clientTime = Math.floor(Date.now() / 1000); // Current client time in seconds
-                const timeOffset = serverTime - clientTime; // Difference between server and client time
+            if (data.status === 'success' || data.status === 'cooldown') {
+                // Update UI accordingly
+                const currentTime = Math.floor(Date.now() / 1000);
+                const deadline = data.deadline || (currentTime + 3 * 60); // Default cooldown is 3 minutes
 
-                // Adjust deadline based on timeOffset
-                const adjustedDeadline = deadline - timeOffset;
-
-                // Disable the "Replay" button and start countdown
+                // Disable the "Replay" button in the dialog and start countdown
                 button.prop('disabled', true);
-                button.text(`Phát lại (${formatCooldown(3 * 60)})`);
-                initializeReplayCountdown(button, adjustedDeadline);
-            } else if (data.status === 'cooldown') {
-                // Server provides 'deadline' as Unix timestamp
-                const deadline = data.deadline; // e.g., 1700000000
-                const serverTime = data.server_time; // e.g., 1699990000
-                const clientTime = Math.floor(Date.now() / 1000); // Current client time in seconds
-                const timeOffset = serverTime - clientTime; // Difference between server and client time
+                button.attr('data-deadline', deadline);
+                initializeReplayCountdown(button, deadline);
 
-                // Adjust deadline based on timeOffset
-                const adjustedDeadline = deadline - timeOffset;
+                // Update the "Replay" button in the history table
+                const historyButton = $(`.replay-btn[data-pickup-id='${pickupId}']`).not(button);
+                if (historyButton.length) {
+                    historyButton.prop('disabled', true);
+                    historyButton.attr('data-deadline', deadline);
+                    initializeReplayCountdown(historyButton, deadline);
+                }
 
-                // Show message and update cooldown time
-                alert(data.message);
-
-                button.prop('disabled', true);
-                const remaining = adjustedDeadline - clientTime;
-                button.text(`Phát lại (${formatCooldown(remaining)})`);
-                initializeReplayCountdown(button, adjustedDeadline);
+                // Update last_replay_time in the data of the row if exists
+                const row = table.row(`#${pickupId}`);
+                if (row.node()) {
+                    const rowData = row.data();
+                    rowData.last_replay_time = new Date().toISOString();
+                    row.data(rowData).draw(false);
+                }
             } else {
                 alert(`Lỗi: ${data.message}`);
             }
@@ -635,7 +585,79 @@ $(document).ready(function () {
         });
     }
 
-    // Function to initialize replay countdown for buttons
+    // Hàm replayPickup đã được cập nhật
+    function replayPickup(pickupId, button) {
+        console.log(`Replaying pickup ID: ${pickupId}`); // Debug log
+
+        const studentName = button.closest('tr').find('.student-name').data('student-name') || 'Unknown';
+        const studentId = button.data('student-id'); // Get student-id from button's data attribute
+
+        console.log('Student Name:', studentName);
+        console.log('Student ID:', studentId);
+
+        // Proceed only if studentId is defined
+        if (!studentId) {
+            console.error('Student ID is undefined.');
+            alert('Không thể lấy thông tin học sinh. Vui lòng thử lại.');
+            return;
+        }
+
+        // Send replay request via AJAX to PHP
+        fetch('index.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `action=replay&pickup_id=${encodeURIComponent(pickupId)}&student_id=${encodeURIComponent(studentId)}&student_name=${encodeURIComponent(studentName)}`
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
+            } else {
+                return response.text().then(text => { throw new Error('Server did not return JSON: ' + text); });
+            }
+        })
+        .then(data => {
+            console.log('Phản hồi:', data); // Log response
+
+            if (data.status === 'success' || data.status === 'cooldown') {
+                // Update UI accordingly
+                const currentTime = Math.floor(Date.now() / 1000);
+                const deadline = data.deadline || (currentTime + 3 * 60); // Default cooldown is 3 minutes
+                button.prop('disabled', true);
+                button.attr('data-deadline', deadline);
+                initializeReplayCountdown(button, deadline);
+
+                // Update the "Replay" button in the dialog if it exists
+                const dialogButton = $(`#dialog_${pickupId} .replay-btn`);
+                if (dialogButton.length) {
+                    dialogButton.prop('disabled', true);
+                    dialogButton.attr('data-deadline', deadline);
+                    initializeReplayCountdown(dialogButton, deadline);
+                }
+
+                // Update last_replay_time in the data of the row
+                const row = table.row(`#${pickupId}`);
+                if (row.node()) {
+                    const rowData = row.data();
+                    rowData.last_replay_time = new Date().toISOString();
+                    row.data(rowData).draw(false);
+                }
+            } else {
+                alert(`Lỗi: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi:', error);
+            alert(`Đã xảy ra lỗi với yêu cầu: ${error.message}`);
+        });
+    }
+
+    // Hàm initializeReplayCountdown đã được cập nhật
     function initializeReplayCountdown(button, deadline) {
         function updateReplayCountdown() {
             const now = Math.floor(Date.now() / 1000);
@@ -662,6 +684,7 @@ $(document).ready(function () {
         // Save interval ID so it can be cleared later if needed
         button.data('interval', interval);
     }
+
 
     // Function to initialize all replay countdowns
     function initializeReplayCountdowns() {
@@ -691,7 +714,7 @@ $(document).ready(function () {
 
                 // Show checkbox and delete button if needed
                 var row = table.row(`#${pickupId}`);
-                if (row.length) {
+                if (row.node()) {
                     // Add checkbox if not already present
                     var checkboxCell = $(row.node()).find('td').eq(0);
                     if ($.trim(checkboxCell.html()) === '') {
@@ -729,7 +752,60 @@ $(document).ready(function () {
         element.data('interval', interval);
     }
 
+    // Function to calculate time remaining until endtime
+    function getTimeRemaining(endtime) {
+        const total = Date.parse(endtime) - Date.parse(new Date());
+        const seconds = Math.floor((total / 1000) % 60);
+        const minutes = Math.floor((total / 1000 / 60) % 60);
+        const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+        const days = Math.floor(total / (1000 * 60 * 60 * 24));
+        return {
+            total,
+            days,
+            hours,
+            minutes,
+            seconds
+        };
+    }
 
+    function fetchHistory() {
+        $.ajax({
+            url: 'get_history.php', // Ensure this file exists and returns JSON in the correct format
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    table.clear(); // Clear existing data
+
+                    if (response.history.length === 0) {
+                        // Let DataTables handle the empty table message
+                        table.draw(false);
+                        // Also remove all dialogs as there are no pending pickups
+                        dialogContainer.empty();
+                        displayedDialogs.clear();
+                        return; // Exit the function to prevent further processing
+                    }
+
+                    response.history.forEach(function(pickup) {
+                        addToHistory(pickup);
+                    });
+
+                    table.draw(false);
+
+                    initializeAllCountdowns();
+                    initializeReplayCountdowns();
+                    synchronizeDialogs(response.history);
+                } else {
+                    console.error('Error fetching history:', response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', error);
+                console.log('Status:', status);
+                console.log('Response:', xhr.responseText);
+            }
+        });
+    }
     // Function to initialize all countdowns for pickup expiration
     function initializeAllCountdowns() {
         $('[id^="countdown_"]').each(function() {
@@ -741,14 +817,7 @@ $(document).ready(function () {
         });
     }
 
-    /**
-     * synchronizeDialogs Function
-     * This function ensures that the dialog boxes in the UI are in sync with the current
-     * pending pickups from the server. It adds new dialogs for new pickups and removes
-     * dialogs for pickups that are no longer pending.
-     *
-     * @param {Array} history - Array of pickup objects from the server.
-     */
+    // Function to synchronize dialogs
     function synchronizeDialogs(history) {
         // Get list of pending pickups from history
         const pendingPickups = history.filter(pickup => pickup.status.toLowerCase() === 'chờ xử lý');
@@ -761,10 +830,10 @@ $(document).ready(function () {
         }).get();
 
         // Find pickups that need to be added to dialogs
-        const pickupsToAdd = pendingPickupIds.filter(id => !currentDialogIds.includes(id));
+        const pickupsToAdd = pendingPickupIds.filter(id => !currentDialogIds.includes(id.toString()));
 
         // Find pickups that need to be removed from dialogs
-        const pickupsToRemove = currentDialogIds.filter(id => !pendingPickupIds.includes(id));
+        const pickupsToRemove = currentDialogIds.filter(id => !pendingPickupIds.includes(parseInt(id)));
 
         // Add new dialogs
         pendingPickups.forEach(pickup => {
@@ -779,13 +848,22 @@ $(document).ready(function () {
             if (dialog.length) {
                 dialog.remove();
                 console.log(`Dialog box for pickup ID ${id} removed.`);
-                displayedDialogs.delete(id);
+                displayedDialogs.delete(parseInt(id));
             }
         });
 
         // Re-initialize replay countdowns for newly added dialogs
         initializeReplayCountdowns();
     }
+
+    // Call fetchHistory on page load
+    fetchHistory();
+    initializeAllCountdowns();
+    initializeReplayCountdowns();
+
+    // Update history every 5 seconds
+    setInterval(fetchHistory, 5000);
+
 
     // Function to fetch pickup history via AJAX
     function fetchHistory() {

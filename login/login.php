@@ -33,6 +33,7 @@ if (!isset($_SESSION['loggedin']) && isset($_COOKIE['remember_token'])) {
         $_SESSION['username'] = $user['username'];
         $_SESSION['userid'] = $user['id'];
         $_SESSION['role'] = $user['role'];
+
     }
 }
 
@@ -74,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['loggedin'] = true;
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['userid'] = $user['id'];
+                $_SESSION['role'] = $user['role'];
 
                 // Handle "Remember Me" functionality
                 if ($remember_me) {
@@ -110,7 +112,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     }
                 }
 
-                // Display success message and redirect to index.php
+                // Determine redirect URL based on user role
+                if (strcasecmp($user['role'], 'GiaoVien') == 0) {
+                    $redirect_url = './index_teacher.php';
+                } elseif (strcasecmp($user['role'], 'PhuHuynh') == 0) {
+                    $redirect_url = './index.php';
+                } else {
+                    // Default redirection if role is unrecognized
+                    $redirect_url = './index.php';
+                }
+
+                // Display success message and redirect to the appropriate page
                 echo "
                 <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css'>
                 <style>
@@ -143,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
                 <script>
                     setTimeout(function() {
-                        window.location.href = './index.php';
+                        window.location.href = '{$redirect_url}';
                     }, 2000);
                 </script>";
                 pg_close($conn);

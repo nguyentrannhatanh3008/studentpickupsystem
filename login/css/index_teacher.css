@@ -1,0 +1,892 @@
+/* index_teacher.css */
+
+/* Reset styles for body and html */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Open Sans', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Header styles, incorporating flexbox for layout */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: #db4b23;
+    color: white;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1001;
+}
+
+.header #btn {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    margin-top: 10px; /* Tạo khoảng cách 10px từ trên */
+    margin-left: 10px; /* Tạo khoảng cách 10px từ trái */
+    cursor: pointer;
+    color: white;
+    z-index: 1100;
+}
+.header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.navbar .nav {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar .nav li {
+    margin-left: 20px;
+}
+
+.navbar .nav li a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.3s;
+}
+
+.navbar .nav li a:hover {
+    color: #ffe6e6;
+}
+
+/* Sidebar styles */
+.sidebar {
+    width: 70px; /* Collapsed width */
+    height: 100vh;
+    background-color: #db4b23;
+    color: white;
+    position: fixed;
+    left: 0;
+    top: 0;
+    transition: width 0.5s; /* Smooth transition for expanding/collapsing */
+    overflow-x: hidden; /* Hide overflow text */
+    z-index: 1000; /* Ensure it stays on top */
+    display: flex; /* Use Flexbox to align content */
+    flex-direction: column; /* Align children vertically */
+    align-items: center; /* Center items horizontally */
+    justify-content: center; /* Center items vertically */
+}
+
+/* Expanded sidebar styles */
+.sidebar.active {
+    width: 250px; /* Expanded width */
+}
+
+/* Sidebar navigation list */
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%; /* Full width for the list */
+}
+
+/* Sidebar navigation items */
+.sidebar ul li {
+    width: 100%; /* Ensure each list item takes full width */
+    padding: 15px;
+    text-align: left;
+    transition: background-color 0.3s;
+    display: flex; /* Use flexbox for aligning items */
+    align-items: center; /* Center the icon and text vertically */
+    justify-content: flex-start; /* Align items to the left when expanded */
+}
+
+.sidebar ul li:hover {
+    background-color: #e65c00;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.sidebar ul li a i {
+    margin-right: 20px;
+    font-size: 18px;
+}
+
+.sidebar ul li a .nav-item {
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.5s; /* Smooth transition for text */
+}
+
+/* Show text when sidebar is expanded */
+.sidebar.active ul li a .nav-item {
+    opacity: 1;
+}
+
+/* Adjust main container based on sidebar state */
+.main-container {
+    margin-left: 70px; /* Margin when sidebar is collapsed */
+    padding: 20px;
+    transition: margin-left 0.5s;
+}
+
+.sidebar.active ~ .main-container {
+    margin-left: 250px; /* Adjust margin when sidebar is expanded */
+}
+
+/* Top bar styles */
+.top {
+    position: absolute;
+    top: 15px;
+    left: 10px;
+    cursor: pointer;
+    color: white;
+}
+
+.top i {
+    font-size: 24px;
+}
+
+/* Form container */
+.form-container {
+    flex: 1;
+    margin-right: 40px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.form-container:hover {
+    transform: translateY(-5px);
+}
+
+/* Checkbox container for student list */
+.checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.checkbox-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    width: 100%;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f0ff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    flex: 1 1 200px;
+    cursor: pointer;
+    position: relative;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.checkbox-item:hover {
+    background-color: #e0e0ff;
+}
+
+.checkbox-item input[type="checkbox"] {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    transform: scale(1.5);
+    accent-color: #db4b23;
+    cursor: pointer;
+}
+
+.checkbox-item input[type="checkbox"]:disabled + label {
+    color: #999999;
+    cursor: not-allowed;
+}
+
+.checkbox-item label {
+    font-size: 16px;
+    white-space: nowrap;
+    margin-left: 40px; /* Increased margin to prevent overlap */
+    cursor: pointer;
+    width: 100%;
+}
+
+/* Button styles */
+button,
+.btn-primary,
+.btn-success,
+.btn-warning,
+.btn-info,
+.btn-danger {
+    border-radius: 5px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+button {
+    padding: 12px 20px;
+    background-color: #db4b23;
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #e06600;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.btn-primary {
+    background-color: #db4b23;
+    border: 1px solid #db4b23;
+}
+
+.btn-primary:hover,
+.btn-primary:active,
+.btn-primary:focus,
+.btn-primary.active,
+.btn-primary.show {
+    background-color: #c33e1b;
+    border-color: #db4b23;
+    box-shadow: none;
+}
+
+.btn-success {
+    background-color: #4dab05;
+    color: white;
+}
+
+.btn-success:hover,
+.btn-success:active,
+.btn-success:focus {
+    background-color: #015d17;
+}
+
+.btn-warning {
+    background-color: #ff9800;
+    color: white;
+}
+
+.btn-warning:hover,
+.btn-warning:active,
+.btn-warning:focus {
+    background-color: #e68a00;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover,
+.btn-info:active,
+.btn-info:focus {
+    background-color: #138496;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover,
+.btn-danger:active,
+.btn-danger:focus {
+    background-color: #c82333;
+}
+
+/* Confirmation section */
+.confirmation-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #e0ffe0;
+    border: 1px solid #b2ffb2;
+    color: #288828;
+    display: none;
+}
+
+/* Input styles */
+input[type="text"],
+input[type="email"],
+input[type="datetime-local"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #db4b23;
+    border-radius: 5px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 14px;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="datetime-local"]:focus {
+    border-color: #e06600;
+    box-shadow: 0 0 8px rgba(255, 165, 0, 0.5);
+}
+
+/* Select styles */
+select#studentName {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 18px;
+    border: 2px solid #db4b23;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #333333;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23db4b23" class="bi bi-caret-down-fill" viewBox="0 0 16 16"> <path d="M7.247 11.14l-4.796-5.481c-.566-.648-.106-1.659.76-1.659h9.588c.866 0 1.326 1.011.76 1.659l-4.796 5.481a1 1 0 0 1-1.518 0z"/> </svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px;
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+select#studentName:hover {
+    border-color: #e65c00;
+}
+
+select#studentName:focus {
+    outline: none;
+    border-color: #cc5200;
+    box-shadow: 0 0 5px rgba(204, 82, 0, 0.5);
+}
+
+/* Dialog container and boxes */
+.dialog-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.575);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.dialog-box {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    min-width: 250px;
+    max-width: 300px;
+    margin-bottom: 10px;
+}
+
+.dialog-box h2 {
+    margin-top: 0;
+}
+
+.dialog-box p {
+    margin: 5px 0;
+}
+
+/* History section */
+.history-section {
+    background-color: #ffffff;
+    padding: 20px;
+    margin: 15px auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-width: 1200px;
+}
+
+.history-section h3 {
+    margin-bottom: 20px;
+}
+
+/* Date filter */
+.date-filter {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.date-filter label {
+    margin-right: 5px;
+    font-weight: bold;
+}
+
+.date-filter input {
+    margin-right: 20px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.date-filter button {
+    margin-right: 10px;
+}
+
+/* Style for the pickup history table */
+#pickupHistoryTable,
+#studentListTable {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 14px;
+}
+
+#pickupHistoryTable thead th,
+#studentListTable thead th {
+    background-color: #db4b23;
+    color: #ffffff;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #e0e0e0;
+}
+
+#pickupHistoryTable tbody td,
+#studentListTable tbody td {
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+#pickupHistoryTable tbody tr:nth-child(even),
+#studentListTable tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#pickupHistoryTable tbody tr:hover,
+#studentListTable tbody tr:hover {
+    background-color: #e9ecef;
+}
+
+/* No history message */
+.no-history-message {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: #c82333;
+    background-color: #ffe6e6;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+    font-style: italic;
+}
+
+/* Dropdown Menu Styling */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    min-width: 160px;
+    padding: 10px 0;
+    margin: 2px 0 0;
+    font-size: 14px;
+    text-align: left;
+    list-style: none;
+    background-color: #db4b23;
+    color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+}
+
+/* Show the dropdown menu */
+.dropdown-menu.show {
+    display: block;
+}
+
+/* Dropdown button styles */
+.dropdown-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    padding: 8px 20px;
+    margin: 4px 0;
+    background-color: #db4b23;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Dropdown button hover effect */
+.dropdown-menu a:hover {
+    background-color: #e65c00;
+}
+
+/* Icon styling within dropdown items */
+.dropdown-menu a i {
+    margin-right: 10px;
+}
+
+/* Specific button styles */
+.confirm-btn {
+    background-color: #4dab05;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.confirm-btn:hover {
+    background-color: #015d17;
+}
+
+.cancel-btn {
+    background-color: #ff0019;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.cancel-btn:hover {
+    background-color: #b90416;
+}
+
+.replay-btn {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.replay-btn:hover {
+    background-color: #138496;
+}
+
+/* Countdown styling */
+.countdown {
+    font-weight: bold;
+    color: red;
+}
+
+/* DataTables styling */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.5em 1em;
+    margin-left: 2px;
+    margin-right: 2px;
+    background: #db4b23;
+    color: #ffffff !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #db4b23;
+    color: #ffffff !important;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: 0.25rem;
+    border: 1px solid #ced4da;
+}
+
+.dataTables_wrapper .dataTables_info {
+    font-style: italic;
+}
+
+/* Ensure delete buttons have cursor pointer */
+#deleteSelectedBtn,
+#deleteAllBtnHistory {
+    cursor: pointer;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-auth {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .navbar .nav {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .navbar .nav li {
+        margin-left: 0;
+        margin-bottom: 10px;
+    }
+
+    .main-container {
+        margin-left: 0;
+        padding: 80px 15px 15px 15px;
+    }
+
+    .sidebar.active ~ .main-container {
+        margin-left: 0;
+    }
+
+    .dialog-container {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    #pickupHistoryTable thead th,
+    #studentListTable thead th,
+    #pickupHistoryTable tbody td,
+    #studentListTable tbody td {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+
+/* Style for the 'Danh sách học sinh' button */
+button[data-target="#collapseStudents"] {
+    background-color: #db4b23;
+    color: white;
+    padding: 10px 20px;
+    border: 1px solid #db4b23;
+    border-radius: 5px;
+    transition: background-color 0.3s, border-color 0.3s;
+    font-size: 16px;
+    text-align: left;
+}
+
+button[data-target="#collapseStudents"]:hover {
+    background-color: #cc5200;
+    border-color: #cc5200;
+    color: white;
+}
+
+button[data-target="#collapseStudents"]:active,
+button[data-target="#collapseStudents"]:focus {
+    background-color: #b33a1a;
+    border-color: #db4b23;
+    outline: none;
+    color: white;
+}
+
+.btn-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.btn-link:hover {
+    text-decoration: none;
+}
+
+/* Additional Modal Styling */
+.modal-header {
+    background-color: #db4b23;
+    color: white;
+}
+
+.modal-footer .btn {
+    min-width: 100px;
+}
+
+/* Table Hover Effects */
+table.dataTable tbody tr:hover {
+    background-color: #e9ecef;
+}
+
+/* Badge styles */
+.badge {
+    font-size: 0.8em;
+    padding: 0.4em 0.6em;
+}
+
+/* Enhancements for Buttons in Modals */
+.confirm-btn-modal,
+.cancel-btn-modal {
+    min-width: 100px;
+}
+
+/* Styles for Student List Section */
+.student-list-section {
+    background-color: #ffffff;
+    padding: 20px;
+    margin: 15px auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-width: 1200px;
+}
+
+.student-list-section h2 {
+    margin-bottom: 20px;
+}
+
+#studentListTable {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 14px;
+}
+
+#studentListTable thead th {
+    background-color: #db4b23;
+    color: #ffffff;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #e0e0e0;
+}
+
+#studentListTable tbody td {
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+#studentListTable tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#studentListTable tbody tr:hover {
+    background-color: #e9ecef;
+}
+
+/* Styles for Collapsible Pickup Form */
+.collapse-box {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    background-color: #ffffff;
+}
+
+.collapse-box-header {
+    background-color: #f8f9fa;
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.collapse-box-header:hover {
+    background-color: #e0e0e0;
+}
+
+.collapse-box-content {
+    padding: 15px;
+    display: none;
+}
+
+.collapse-box.open .collapse-box-content {
+    display: block;
+}
+
+.collapse-icon {
+    transition: transform 0.3s;
+}
+
+.collapse-box.open .collapse-icon {
+    transform: rotate(180deg);
+}
+
+/* Auto-Fill Container Styles */
+.auto-fill-container {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.auto-fill-box {
+    background-color: #f0f8ff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: calc(33.333% - 10px);
+    box-sizing: border-box;
+}
+
+.auto-fill-box p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+/* Styles for Export Buttons */
+.export-buttons {
+    margin-bottom: 20px;
+}
+
+.export-buttons .btn {
+    margin-right: 10px;
+}
+
+/* Responsive Adjustments for Tables */
+@media (max-width: 992px) {
+    .auto-fill-box {
+        width: calc(50% - 10px);
+    }
+}
+
+@media (max-width: 576px) {
+    .auto-fill-box {
+        width: 100%;
+    }
+
+    .date-filter {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .date-filter input,
+    .date-filter button {
+        width: 100%;
+        margin-right: 0;
+    }
+}
+
+/* Existing select box styles */
+select#studentName,
+select#studentSelect { /* Modified to include both IDs */
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 18px;
+    border: 2px solid #db4b23;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #333333;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23db4b23" class="bi bi-caret-down-fill" viewBox="0 0 16 16"> <path d="M7.247 11.14l-4.796-5.481c-.566-.648-.106-1.659.76-1.659h9.588c.866 0 1.326 1.011.76 1.659l-4.796 5.481a1 1 0 0 1-1.518 0z"/> </svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px;
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+select#studentName:hover,
+select#studentSelect:hover { /* Apply hover styles to both */
+    border-color: #e65c00;
+}
+
+select#studentName:focus,
+select#studentSelect:focus { /* Apply focus styles to both */
+    outline: none;
+    border-color: #cc5200;
+    box-shadow: 0 0 5px rgba(204, 82, 0, 0.5);
+}
+

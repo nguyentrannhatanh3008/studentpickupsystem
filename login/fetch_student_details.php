@@ -1,59 +1,71 @@
 <?php
 session_start();
 
+// Database configuration
 $servername = "localhost";
-$username = "postgres";
-$password = "!xNq!TRWY.AuD9U";
+$username_db = "postgres";
+$password_db = "!xNq!TRWY.AuD9U";
 $dbname = "studentpickup";
 
+// Error logging configuration
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+
+// Set timezone
+date_default_timezone_set('Asia/Ho_Chi_Minh');
+
 // Connect to PostgreSQL database
-$conn = pg_connect("host=$servername dbname=$dbname user=$username password=$password");
+$conn = pg_connect("host=$servername dbname=$dbname user=$username_db password=$password_db");
 
 if (!$conn) {
-    echo json_encode(['status' => 'error', 'message' => 'Connection failed: ' . pg_last_error()]);
+    echo json_encode(['status' => 'error', 'message' => 'Kết nối cơ sở dữ liệu thất bại.']);
     exit();
 }
 
-// Check if the user is logged in
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    echo json_encode(['status' => 'error', 'message' => 'User not logged in']);
+// Check login and role
+$isLoggedIn = isset($_SESSION['userid']) && isset($_SESSION['role']) && strcasecmp(trim($_SESSION['role']), 'GiaoVien') === 0;
+
+if (!$isLoggedIn) {
+    echo json_encode(['status' => 'error', 'message' => 'Người dùng chưa đăng nhập hoặc không có quyền truy cập.']);
     exit();
 }
 
-// Ensure user ID is set
-if (!isset($_SESSION['userid'])) {
-    echo json_encode(['status' => 'error', 'message' => 'User ID not set']);
-    exit();
-}
-
-$userId = $_SESSION['userid'];
-
-// Check if student_id is provided
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['student_id'])) {
-    $studentId = $_POST['student_id'];
+    $student_id = intval($_POST['student_id']);
 
-    // Sanitize the student ID to prevent SQL injection
-    if (!is_numeric($studentId)) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid student ID']);
-        exit();
-    }
+    // Fetch student information ensuring the student belongs to the teacher's class
+    $studentQuery = "SELECT * FROM public.student WHERE id = $1 AND class_id = $2";
+    $teacher_class_id = $_SESSION['class_id'];
+    $studentResult = pg_query_params($conn, $studentQuery, array($student_id, $teacher_class_id));
 
-    // Fetch student details from the database, ensuring the student is associated with the logged-in user
-    $query = "SELECT * FROM public.student WHERE id = $1 AND (FPN = (SELECT phone FROM public.user WHERE id = $2) OR MPN = (SELECT phone FROM public.user WHERE id = $2))";
-    $result = pg_query_params($conn, $query, array($studentId, $userId));
-
-    if ($result) {
-        $student = pg_fetch_assoc($result);
-        if ($student) {
-            echo json_encode(['status' => 'success', 'student' => $student]);
-        } else {
-            echo json_encode(['status' => 'error', 'message' => 'Student not found or not associated with your account']);
-        }
+    if ($studentResult && pg_num_rows($studentResult) > 0) {
+        $student = pg_fetch_assoc($studentResult);
+        echo json_encode([
+            'status' => 'success',
+            'student' => [
+                'id' => htmlspecialchars($student['id']),
+                'code' => htmlspecialchars($student['code']),
+                'name' => htmlspecialchars($student['name']),
+                'gender' => htmlspecialchars($student['gender']),
+                'fn' => htmlspecialchars($student['fn']),
+                'fpn' => htmlspecialchars($student['fpn']),
+                'mn' => htmlspecialchars($student['mn']),
+                'mpn' => htmlspecialchars($student['mpn']),
+                'created_at' => htmlspecialchars($student['created_at']),
+                'updated_at' => htmlspecialchars($student['updated_at']),
+                'deleted_at' => htmlspecialchars($student['deleted_at']),
+                'class_id' => htmlspecialchars($student['class_id']),
+                'class' => htmlspecialchars($student['class']),
+                'birthdate' => htmlspecialchars($student['birthdate']),
+            ]
+        ]);
     } else {
-        echo json_encode(['status' => 'error', 'message' => pg_last_error($conn)]);
+        echo json_encode(['status' => 'error', 'message' => 'Không tìm thấy thông tin học sinh.']);
     }
 } else {
-    echo json_encode(['status' => 'error', 'message' => 'Invalid request']);
+    echo json_encode(['status' => 'error', 'message' => 'Thiếu tham số yêu cầu.']);
 }
 
 pg_close($conn);

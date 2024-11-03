@@ -382,5 +382,87 @@ $(document).ready(function() {
     // Optional: Reload the page every 10 seconds to fetch new notifications
     setInterval(function(){
         location.reload();
-    }, 10000);
+    }, 15000);
+    let lastCheckTime = null;
+
+    // Kiểm tra xem trình duyệt có hỗ trợ Notification API không
+    if ('Notification' in window) {
+        // Yêu cầu quyền hiển thị thông báo nếu chưa được cấp
+        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'granted') {
+                    // Người dùng đã cho phép hiển thị thông báo
+                    startNotificationCheck();
+                }
+            });
+        } else if (Notification.permission === 'granted') {
+            // Người dùng đã cho phép trước đó
+            startNotificationCheck();
+        }
+    }
+
+    function startNotificationCheck() {
+        // Gọi hàm kiểm tra thông báo mới mỗi 10 giây (có thể điều chỉnh)
+        setInterval(checkNewNotifications, 10000); // 10000 milliseconds = 10 seconds
+    }
+
+    function checkNewNotifications() {
+        $.ajax({
+            url: 'notification.php',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'check_new_notifications',
+                last_check_time: lastCheckTime
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    const notifications = response.notifications;
+                    if (notifications.length > 0) {
+                        // Cập nhật thời gian cuối cùng kiểm tra
+                        lastCheckTime = notifications[0].created_at;
+
+                        // Hiển thị thông báo
+                        notifications.forEach(function(notification) {
+                            showBrowserNotification(notification.title, notification.message);
+                        });
+
+                        // Cập nhật số lượng thông báo chưa đọc trên giao diện
+                        updateUnreadCount(response.unread_count);
+                    } else {
+                        // Không có thông báo mới, nhưng vẫn cần cập nhật số lượng chưa đọc
+                        updateUnreadCount(response.unread_count);
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Lỗi khi kiểm tra thông báo mới:', error);
+            }
+        });
+    }
+
+    function showBrowserNotification(title, message) {
+        const options = {
+            body: message,
+            icon: 'path/to/icon.png', // Đường dẫn đến icon nếu có
+            // tag: 'unique-tag' // Có thể sử dụng tag để nhóm các thông báo
+        };
+        const notification = new Notification(title, options);
+
+        // Xử lý sự kiện khi người dùng click vào thông báo
+        notification.onclick = function(event) {
+            event.preventDefault();
+            // Mở trang thông báo hoặc thực hiện hành động nào đó
+            window.open('notification.php', '_blank');
+        };
+    }
+
+    function updateUnreadCount(count) {
+        const badge = $('.badge-danger');
+        if (count > 0) {
+            badge.text(count).show();
+        } else {
+            badge.hide();
+        }
+    }
 });
